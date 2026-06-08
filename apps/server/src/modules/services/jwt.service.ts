@@ -1,12 +1,13 @@
-import jwt from "jsonwebtoken";
+import jwt, { JwtPayload } from "jsonwebtoken";
 import { env } from "../../config/env";
 
+interface TokenPayload extends JwtPayload {
+  userId: string;
+}
 
 export class JwtService {
 
-  static signAccessToken(
-    userId: string
-  ) {
+  static signAccessToken(userId: string): string {
     return jwt.sign(
       { userId },
       env.JWT_SECRET,
@@ -16,9 +17,7 @@ export class JwtService {
     );
   }
 
-  static signRefreshToken(
-    userId: string
-  ) {
+  static signRefreshToken(userId: string): string {
     return jwt.sign(
       { userId },
       env.JWT_REFRESH_SECRET,
@@ -28,21 +27,21 @@ export class JwtService {
     );
   }
 
-  static verifyAccessToken(
-    token: string
-  ) {
-    return jwt.verify(
-      token,
-      env.JWT_SECRET
-    );
+  static verifyAccessToken(token: string): TokenPayload {
+    const decoded = jwt.verify(token, env.JWT_SECRET);
+    // Check if decoded is a string (shouldn't happen with proper tokens)
+    if (typeof decoded === 'string') {
+      throw new Error('Invalid token format');
+    }
+    return decoded as TokenPayload;
   }
 
-  static verifyRefreshToken(
-    token: string
-  ) {
-    return jwt.verify(
-      token,
-      env.JWT_REFRESH_SECRET
-    );
+  static verifyRefreshToken(token: string): TokenPayload {
+    const decoded = jwt.verify(token, env.JWT_REFRESH_SECRET);
+    // Check if decoded is a string (shouldn't happen with proper tokens)
+    if (typeof decoded === 'string') {
+      throw new Error('Invalid token format');
+    }
+    return decoded as TokenPayload;
   }
 }

@@ -2,10 +2,10 @@ import {Router} from "express";
 
 
 import { AdminController } from "./admin.controller";
-import { asyncHandler } from "../../utils/asyncHandler";
-import { authenticate } from "../middleware/auth.middleware";
-import { UserRole } from "../shared/enums/role.enum";
-import { authorize } from "../middleware/role.middleware";
+import { asyncHandler } from "@/utils/asyncHandler";
+import { authenticate } from "@/modules/middleware/auth.middleware";
+import { authorize } from "@/modules/middleware/role.middleware";
+import { UserRole } from "@/enum/role.enum";
 
 const router = Router();
 
@@ -51,3 +51,5 @@ router.get(
     authorize(UserRole.ADMIN, UserRole.SUPER_ADMIN),
     asyncHandler(controller.totalSavings)
   );
+
+export default router

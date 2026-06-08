@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 
 import { UserService } from "./user.service";
 
-import { apiResponse } from "../../utils/ApiResponse";
+import { apiResponse } from "../../utils/apiResponse";
 
 export class UserController {
   private service = new UserService();

@@ -1,9 +1,9 @@
 import mongoose from "mongoose";
-import { UserRole } from "../shared/enums/role.enum";
 import {
   baseSchemaFields,
   baseSchemaOptions,
 } from "../shared/database/base.schema";
+import { UserRole } from "../../enum/role.enum";
 
 const userSchema = new mongoose.Schema(
   {
@@ -29,11 +29,20 @@ const userSchema = new mongoose.Schema(
       required: true,
     },
 
-    avatar: { type: String },
+    avatar: {
+      type: String,
+      default:
+        "https://cdn.vectorstock.com/i/1000v/41/91/avatar-default-user-profile-icon-simple-flat-grey-vector-57234191.jpg",
+    },
 
     phone: { type: String },
 
     address: { type: String },
+    firebaseId: {
+      type: String,
+      sparse: true,
+      index: true,
+    },
 
     role: {
       type: String,

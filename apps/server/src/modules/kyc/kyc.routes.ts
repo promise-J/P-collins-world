@@ -5,8 +5,8 @@ import { KYCController } from "./kyc.controller";
 
 import { asyncHandler } from "../../utils/asyncHandler";
 import { authenticate } from "../middleware/auth.middleware";
-import { UserRole } from "../shared/enums/role.enum";
 import { authorize } from "../middleware/role.middleware";
+import { UserRole } from "../../enum/role.enum";
 
 const router = Router();
 

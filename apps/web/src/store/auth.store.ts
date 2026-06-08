@@ -1,0 +1,276 @@
+import { create } from 'zustand';
+import { persist } from 'zustand/middleware';
+import { AuthService, ApiResponse } from '@/services/auth.service';
+import { api } from '@/lib/axios';
+import { FirebaseService } from '@/services/firebase.service';
+
+interface User {
+  _id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  role: string;
+  isVerified: boolean;
+  avatar?: string;
+  phone?: string;
+  address?: string;
+}
+
+interface RegisterData {
+  firstName: string;
+  lastName: string;
+  email: string;
+  password: string;
+  phone?: string;
+}
+
+interface AuthState {
+  user: User | null;
+  token: string | null;
+  isLoading: boolean;
+  error: string | null;
+  isAuthenticated: boolean;
+  
+  login: (email: string, password: string) => Promise<{ success: boolean; message?: string }>;
+  register: (data: RegisterData) => Promise<{ success: boolean; message?: string }>;
+  logout: () => Promise<void>;
+  verifyEmail: (token: string) => Promise<{ success: boolean; message?: string }>;
+  forgotPassword: (email: string) => Promise<{ success: boolean; message?: string }>;
+  resetPassword: (token: string, password: string) => Promise<{ success: boolean; message?: string }>;
+  resendVerification: (email: string) => Promise<{ success: boolean; message?: string }>;
+  googleLogin: () => Promise<{ success: boolean; message?: string }>;
+  checkAuth: () => Promise<void>;
+  clearError: () => void;
+}
+
+export const useAuthStore = create<AuthState>()(
+  persist(
+    (set, get) => ({
+      user: null,
+      token: null,
+      isLoading: true,
+      error: null,
+      isAuthenticated: false,
+
+      checkAuth: async () => {
+        const token = get().token || localStorage.getItem('token');
+        
+        if (!token) {
+          set({ isLoading: false, isAuthenticated: false });
+          return;
+        }
+
+        try {
+          api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+          const response: ApiResponse = await AuthService.me();
+          
+          if (response.success && response.data) {
+            set({
+              user: response.data.user || response.data,
+              isAuthenticated: true,
+              isLoading: false,
+            });
+          } else {
+            throw new Error(response.message);
+          }
+        } catch (error) {
+          console.error('Auth check failed:', error);
+          localStorage.removeItem('token');
+          delete api.defaults.headers.common['Authorization'];
+          set({
+            user: null,
+            token: null,
+            isAuthenticated: false,
+            isLoading: false,
+          });
+        }
+      },
+
+      login: async (email, password) => {
+        set({ isLoading: true, error: null });
+        try {
+          const response = await AuthService.login({ email, password });
+          
+          if (response.success && response.data) {
+            const { user, accessToken } = response.data;
+            
+            set({
+              user,
+              token: accessToken,
+              isAuthenticated: true,
+              isLoading: false,
+            });
+            
+            localStorage.setItem('token', accessToken);
+            api.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
+            
+            return { success: true, message: response.message };
+          } else {
+            set({
+              error: response.message || 'Login failed',
+              isLoading: false,
+            });
+            return { success: false, message: response.message };
+          }
+        } catch (err: any) {
+          const errorMessage = err.response?.data?.message || 'Login failed';
+          set({
+            error: errorMessage,
+            isLoading: false,
+          });
+          return { success: false, message: errorMessage };
+        }
+      },
+
+      register: async (data: RegisterData) => {
+        set({ isLoading: true, error: null });
+        try {
+          const response = await AuthService.register(data);
+          
+          if (response.success) {
+            set({ isLoading: false });
+            return { success: true, message: response.message };
+          } else {
+            set({
+              error: response.message || 'Registration failed',
+              isLoading: false,
+            });
+            return { success: false, message: response.message };
+          }
+        } catch (err: any) {
+          const errorMessage = err.response?.data?.message || 'Registration failed';
+          set({
+            error: errorMessage,
+            isLoading: false,
+          });
+          return { success: false, message: errorMessage };
+        }
+      },
+
+      logout: async () => {
+        set({ isLoading: true });
+        try {
+          await AuthService.logout();
+          await FirebaseService.logout(); // Also logout from Firebase
+        } catch (err) {
+          console.error('Logout error:', err);
+        } finally {
+          set({
+            user: null,
+            token: null,
+            isAuthenticated: false,
+            isLoading: false,
+          });
+          localStorage.removeItem('token');
+          delete api.defaults.headers.common['Authorization'];
+        }
+      },
+
+      verifyEmail: async (token) => {
+        set({ isLoading: true });
+        try {
+          const response = await AuthService.verifyEmail(token);
+          set({ isLoading: false });
+          return { success: response.success, message: response.message };
+        } catch (err: any) {
+          const errorMessage = err.response?.data?.message || 'Verification failed';
+          set({ isLoading: false, error: errorMessage });
+          return { success: false, message: errorMessage };
+        }
+      },
+
+      forgotPassword: async (email) => {
+        set({ isLoading: true });
+        try {
+          const response = await AuthService.forgotPassword({ email });
+          set({ isLoading: false });
+          return { success: response.success, message: response.message };
+        } catch (err: any) {
+          const errorMessage = err.response?.data?.message || 'Failed to send reset email';
+          set({ isLoading: false, error: errorMessage });
+          return { success: false, message: errorMessage };
+        }
+      },
+
+      resetPassword: async (token, password) => {
+        set({ isLoading: true });
+        try {
+          const response = await AuthService.resetPassword(token, { password });
+          set({ isLoading: false });
+          return { success: response.success, message: response.message };
+        } catch (err: any) {
+          const errorMessage = err.response?.data?.message || 'Failed to reset password';
+          set({ isLoading: false, error: errorMessage });
+          return { success: false, message: errorMessage };
+        }
+      },
+
+      resendVerification: async (email) => {
+        set({ isLoading: true });
+        try {
+          const response = await AuthService.resendVerification({ email });
+          set({ isLoading: false });
+          return { success: response.success, message: response.message };
+        } catch (err: any) {
+          const errorMessage = err.response?.data?.message || 'Failed to resend verification';
+          set({ isLoading: false, error: errorMessage });
+          return { success: false, message: errorMessage };
+        }
+      },
+
+      googleLogin: async () => {
+        set({ isLoading: true, error: null });
+        try {
+          const response = await FirebaseService.signInWithGoogle();
+          
+          if (response.success && response.data) {
+            const { user, accessToken } = response.data;
+            
+            set({
+              user,
+              token: accessToken,
+              isAuthenticated: true,
+              isLoading: false,
+            });
+            
+            localStorage.setItem('token', accessToken);
+            api.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
+            
+            return { success: true, message: response.message };
+          } else {
+            set({
+              error: response.message || 'Google login failed',
+              isLoading: false,
+            });
+            return { success: false, message: response.message };
+          }
+        } catch (err: any) {
+          const errorMessage = err.response?.data?.message || 'Google login failed';
+          set({
+            error: errorMessage,
+            isLoading: false,
+          });
+          return { success: false, message: errorMessage };
+        }
+      },
+
+      clearError: () => set({ error: null }),
+    }),
+    {
+      name: 'auth-storage',
+      partialize: (state) => ({ 
+        token: state.token, 
+        user: state.user, 
+        isAuthenticated: state.isAuthenticated 
+      }),
+    }
+  )
+);
+
+// Auto-initialize auth on module load
+const token = localStorage.getItem('token');
+if (token) {
+  useAuthStore.getState().checkAuth();
+} else {
+  useAuthStore.setState({ isLoading: false });
+}

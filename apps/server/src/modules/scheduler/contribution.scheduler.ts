@@ -1,8 +1,9 @@
-import { SavingsPlan } from "../savings/savings-plan.model";
+
+import { SavingsPlanModel } from "../savings/saving-plan.model";
 import { WalletService } from "../wallet/wallet.service";
 
 export const runContributions = async () => {
-  const plans = await SavingsPlan.find({
+  const plans = await SavingsPlanModel.find({
     autoDebit: true,
     isCompleted: false
   });
@@ -13,7 +14,7 @@ export const runContributions = async () => {
     const amount = 1000; // calculated based on frequency
 
     await wallet.debit(
-      plan.userId.toString(),
+      plan?.userId?.toString() ?? "",
       amount,
       `AUTO-${Date.now()}`
     );

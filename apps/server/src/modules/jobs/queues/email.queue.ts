@@ -1,29 +1,20 @@
 import { Queue } from "bullmq";
-import { createRedisConnection } from "../../../config/redis";
+import { bullmqConnection } from "../config/bullmq.config";
 
+export const emailQueue = new Queue("email-queue", {
+  connection: bullmqConnection,
+  defaultJobOptions: {
+    attempts: 3,
+    backoff: {
+      type: "exponential",
+      delay: 2000,
+    },
+    removeOnComplete: 100,
+    removeOnFail: 500,
+  },
+});
 
-export const emailQueue =
-  new Queue(
-    "email-queue",
-    {
-      connection: createRedisConnection(),
-      defaultJobOptions: {
-        attempts: 3, // Best practice: retry failed emails
-        backoff: {
-          type: "exponential",
-          delay: 1000,
-        },
-      },
-    }
-  );
-
-
-//   sample to add jobs
-// await emailQueue.add(
-//     "send-email",
-//     {
-//       email,
-//       subject,
-//       html
-//     }
-//   );
+// Add job helper
+export const addEmailJob = async (to: string, subject: string, html: string) => {
+  return emailQueue.add("send-email", { to, subject, html });
+};

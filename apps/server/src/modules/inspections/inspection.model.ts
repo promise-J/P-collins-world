@@ -14,7 +14,10 @@ const inspectionSchema = new mongoose.Schema(
       index: true
     },
 
-    scheduledDate: Date,
+    scheduledDate: {type: Date},
+    adminNotes: {
+      type: String
+    },
 
     status: {
       type: String,

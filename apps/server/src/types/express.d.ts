@@ -1,13 +1,12 @@
-import { UserRole } from "../modules/shared/enums/role.enum";
+import { UserRole } from "@/enum/role.enum";
 
-
+// Declare modifications to the global Express namespace
 declare global {
   namespace Express {
     interface Request {
       user?: {
-        id?: string;
-        role?: UserRole;
-        // Add any other user properties your JWT payload contains
+        id: string;
+        role: UserRole;
       };
     }
   }

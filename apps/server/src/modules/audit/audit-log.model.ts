@@ -7,33 +7,24 @@ const auditLogSchema = new mongoose.Schema(
       ref: "User",
       index: true
     },
-
     action: {
       type: String,
       required: true
     },
-
     module: {
       type: String,
       required: true
     },
-
     metadata: {
       type: Object
     },
-
     ipAddress: String,
-
     userAgent: String
   },
-  {
-    timestamps: true
-  }
+  { timestamps: true }
 );
 
-auditLogSchema.index({
-  createdAt: -1
-});
+auditLogSchema.index({ createdAt: -1 });
 
-export const AuditLogModel =
-  mongoose.model("AuditLog", auditLogSchema);
+// Check if model exists before creating
+export const AuditLogModel = mongoose.models.AuditLog || mongoose.model("AuditLog", auditLogSchema);

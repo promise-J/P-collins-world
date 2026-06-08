@@ -1,0 +1,29 @@
+@import "tailwindcss";
+
+@theme {
+  /* Brand Colors */
+  --color-brand-primary: #8B3A3A;      /* Red Brown */
+  --color-brand-secondary: #D4A373;    /* Sand Brown */
+  --color-brand-bg: #FFFFFF;           /* White */
+  --color-brand-text: #1A2A4F;         /* Navy Blue */
+  
+  /* Extended Palette */
+  --color-brand-primary-dark: #6B2C2C;
+  --color-brand-primary-light: #A54A4A;
+  --color-brand-secondary-dark: #B8895A;
+  --color-brand-secondary-light: #E0B88A;
+  --color-brand-navy-light: #2A3D6E;
+  
+  /* Semantic Colors */
+  --color-success: #10B981;
+  --color-warning: #F59E0B;
+  --color-danger: #EF4444;
+  --color-info: #3B82F6;
+}
+
+@layer base {
+  body {
+    background-color: var(--color-brand-bg);
+    color: var(--color-brand-text);
+  }
+}

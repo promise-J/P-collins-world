@@ -1,9 +1,44 @@
-import express from 'express';
-import healthRouter from "./health.route";
-import { he } from 'zod/v4/locales';
+import { Router } from "express";
+import authRoutes from "../modules/auth/auth.routes";
+import userRoutes from "../modules/users/user.routes";
+import adminRoutes from "../modules/admin/admin.routes";
+import kycRoutes from "../modules/kyc/kyc.routes";
+import cartRoutes from "../modules/market/cart/cart.routes";
+import orderRoutes from "../modules/market/orders/order.routes";
+import productRoutes from "../modules/market/products/product.routes";
+import couponRoutes from "../modules/market/coupons/coupon.routes";
+import categoryRoutes from "../modules/market/categories/category.routes";
+import reviewRoutes from "../modules/market/reviews/review.routes";
+import propertyRoutes from "../modules/properties/property.routes";
+import favoriteRoutes from "../modules/favorites/favorite.routes";
+import inspectionRoutes from "../modules/inspections/inspection.routes";
+import savingsRoutes from "../modules/savings/saving.routes";
+import walletRoutes from "../modules/wallet/wallet.routes";
+import notificationRoutes from "../modules/notifications/notification.routes";
+import analyticsRoutes from "../modules/analytics/analytics.routes";
+import auditRoutes from "../modules/audit/audit.routes";
+import uploadRoutes from "../modules/uploads/upload.routes";
 
-const router = express.Router();
+const router = Router();
 
-router.use("/health", healthRouter);
+router.use("/auth", authRoutes);
+router.use("/users", userRoutes);
+router.use("/admin", adminRoutes);
+router.use("/kyc", kycRoutes);
+router.use("/cart", cartRoutes);
+router.use("/orders", orderRoutes);
+router.use("/products", productRoutes);
+router.use("/coupons", couponRoutes);
+router.use("/categories", categoryRoutes);
+router.use("/reviews", reviewRoutes);
+router.use("/properties", propertyRoutes);
+router.use("/favorites", favoriteRoutes);
+router.use("/inspections", inspectionRoutes);
+router.use("/savings", savingsRoutes);
+router.use("/wallet", walletRoutes);
+router.use("/notifications", notificationRoutes);
+router.use("/analytics", analyticsRoutes);
+router.use("/audit", auditRoutes);
+router.use("/upload", uploadRoutes);
 
-export default router
+export default router;
