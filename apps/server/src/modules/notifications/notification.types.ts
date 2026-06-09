@@ -1,0 +1,26 @@
+export enum NotificationType {
+
+    EMAIL_VERIFICATION,
+  
+    PASSWORD_RESET,
+  
+    KYC_APPROVED,
+  
+    KYC_REJECTED,
+  
+    SAVINGS_CONTRIBUTION,
+  
+    SAVINGS_MATURITY,
+  
+    ORDER_CREATED,
+  
+    ORDER_PAID,
+  
+    ORDER_SHIPPED,
+  
+    ORDER_DELIVERED,
+  
+    RENT_REMINDER,
+  
+    INSPECTION_BOOKED
+  }

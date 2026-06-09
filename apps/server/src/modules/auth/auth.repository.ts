@@ -25,4 +25,14 @@ export class AuthRepository {
       token
     );
   }
+  async findByFirebaseId(firebaseId: string) {
+    return this.users.findOne({ firebaseId });
+  }
+  
+  async updateFirebaseId(userId: string, firebaseId: string) {
+    return this.users.findByIdAndUpdate(
+      userId,
+      { firebaseId }
+    );
+  }
 }

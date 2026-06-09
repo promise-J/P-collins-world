@@ -1,51 +1,24 @@
-import { Request, Response }
-from "express";
+import { Router } from "express";
+import { asyncHandler } from "../../utils/asyncHandler";
+import { AuthController } from "./auth.controller";
+import { validate } from "../middleware/validate.middleware";
+import { loginSchema, registerSchema, forgotPasswordSchema, resetPasswordSchema } from "./auth.validation";
+import { authenticate } from "../middleware/auth.middleware";
 
-import { AuthService }
-from "./auth.service";
+const router = Router();
+const controller = new AuthController();
 
-import { ApiResponse }
-from "../../utils/ApiResponse";
+// Public routes
+router.post("/register", validate(registerSchema), asyncHandler(controller.register));
+router.post("/login", validate(loginSchema), asyncHandler(controller.login));
+router.post("/google", asyncHandler(controller.googleAuth));
+router.post("/refresh", asyncHandler(controller.refresh));
+router.post("/forgot-password", validate(forgotPasswordSchema), asyncHandler(controller.forgotPassword));
+router.post("/reset-password/:token", validate(resetPasswordSchema), asyncHandler(controller.resetPassword));
+router.get("/verify-email/:token", asyncHandler(controller.verifyEmail));
+router.post("/resend-verification", asyncHandler(controller.resendVerification));
 
-export class AuthController {
+// Protected routes
+router.post("/logout", authenticate, asyncHandler(controller.logout));
 
-  private service =
-    new AuthService();
-
-  register = async (
-    req: Request,
-    res: Response
-  ) => {
-
-    const user =
-      await this.service.register(
-        req.body
-      );
-
-    res.status(201).json(
-      new ApiResponse(
-        "Registration successful",
-        user
-      )
-    );
-  };
-
-  login = async (
-    req: Request,
-    res: Response
-  ) => {
-
-    const result =
-      await this.service.login(
-        req.body.email,
-        req.body.password
-      );
-
-    res.json(
-      new ApiResponse(
-        "Login successful",
-        result
-      )
-    );
-  };
-}
+export default router;

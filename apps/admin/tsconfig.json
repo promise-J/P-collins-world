@@ -1,0 +1,32 @@
+{
+    "compilerOptions": {
+      "target": "ES2022",
+      "useDefineForClassFields": true,
+      "lib": ["DOM", "DOM.Iterable", "ES2022"],
+      "module": "ESNext",
+      "skipLibCheck": true,
+  
+      /* 1. Bundler Mode (Critical for Vite) */
+      "moduleResolution": "bundler",
+      "allowImportingTsExtensions": true,
+      "resolveJsonModule": true,
+      "isolatedModules": true,
+      "noEmit": true,
+      "jsx": "react-jsx",
+  
+      /* 2. Absolute Path Aliasing (Allows import from '@/components/...') */
+      "baseUrl": ".",
+      "paths": {
+        "@/*": ["src/*"]
+      },
+  
+      /* 3. Strict Type-Checking Rules */
+      "strict": true,
+      "noUnusedLocals": true,
+      "noUnusedParameters": true,
+      "noImplicitReturns": true,
+      "noFallthroughCasesInSwitch": true
+    },
+    "include": ["src"]
+  }
+  

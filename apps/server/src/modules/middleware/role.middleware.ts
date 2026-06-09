@@ -4,9 +4,8 @@ import {
     NextFunction
   }
   from "express";
+import { UserRole } from "@/enum/role.enum";
   
-  import { UserRole }
-  from "../shared/enums/role.enum";
   
   export const authorize =
   (...roles:UserRole[]) =>

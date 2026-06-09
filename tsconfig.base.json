@@ -8,5 +8,6 @@
       "resolveJsonModule": true,
       "esModuleInterop": true,
       "types": ["node"],
+      "typeRoots": ["./node_modules/@types", "./apps/types", "./src/types"]
     }
   }

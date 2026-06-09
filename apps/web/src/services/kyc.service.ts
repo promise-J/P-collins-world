@@ -1,0 +1,31 @@
+import { api } from "@/lib/axios";
+
+
+export class KYCService {
+  static async submitKyc(payload: {
+    fullName: string;
+    idType: string;
+    idNumber: string;
+    idDocumentUrl: string;
+    selfieUrl: string;
+    documents?: Array<{ type: string; url: string; publicId: string }>;
+  }) {
+    const response = await api.post("/kyc/submit", payload);
+    return response.data;
+  }
+
+  static async getMyKyc() {
+    const response = await api.get("/kyc/me");
+    return response.data;
+  }
+
+  static async getPendingKyc(params?: { page?: number; limit?: number }) {
+    const response = await api.get("/admin/analytics/pending-kyc", { params });
+    return response.data;
+  }
+
+  static async review(kycId: string, payload: { status: string; reason?: string }) {
+    const response = await api.patch(`/kyc/${kycId}/review`, payload);
+    return response.data;
+  }
+}

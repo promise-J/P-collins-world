@@ -1,0 +1,6 @@
+allowBuilds:
+  '@firebase/util': false
+  '@scarf/scarf': false
+  esbuild: false
+  msgpackr-extract: false
+  protobufjs: false

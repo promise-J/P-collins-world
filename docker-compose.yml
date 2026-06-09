@@ -1,15 +1,27 @@
-version: '3.9'
+
 
 services:
+  prod-redis:
+    image: redis:7-alpine
+    container_name: production_redis
+    restart: always
+    ports:
+      - "6379:6379" # Accessible locally on the server machine
+    volumes:
+      - redis-data:/data
 
-  mongo:
+  prod-mongo:
     image: mongo:8
+    container_name: production_mongodb
     restart: always
     ports:
       - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: YourVerySecurePassword Here
+    volumes:
+      - mongo-data:/data/db
 
-  redis:
-    image: redis:7
-    restart: always
-    ports:
-      - "6379:6379"
+volumes:
+  redis-data:
+  mongo-data:
