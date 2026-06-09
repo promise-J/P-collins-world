@@ -1,7 +1,6 @@
 import { Worker } from "bullmq";
 import { bullmqConnection } from "../config/bullmq.config";
 import { EmailService } from "../../email/email.service";
-import { logger } from "../../../config/logger";
 
 const emailService = new EmailService();
 

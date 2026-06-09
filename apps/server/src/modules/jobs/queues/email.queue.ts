@@ -2,7 +2,7 @@ import { Queue } from "bullmq";
 import { bullmqConnection } from "../config/bullmq.config";
 
 export const emailQueue = new Queue("email-queue", {
-  connection: bullmqConnection,
+  connection: bullmqConnection, 
   defaultJobOptions: {
     attempts: 3,
     backoff: {
@@ -14,7 +14,7 @@ export const emailQueue = new Queue("email-queue", {
   },
 });
 
-// Add job helper
+
 export const addEmailJob = async (to: string, subject: string, html: string) => {
   return emailQueue.add("send-email", { to, subject, html });
 };
