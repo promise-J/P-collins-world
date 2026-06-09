@@ -1,6 +1,6 @@
 import { KYCModel, KYCStatus } from "./kyc.model";
 
-import { ApiError } from "../../utils/ApiError";
+import { ApiError } from "../../utils/apiError";
 
 export class KYCService {
   async submitKyc(userId: string, data: any) {

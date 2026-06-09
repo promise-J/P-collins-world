@@ -2,7 +2,7 @@ import { UserRepository } from "./user.repository";
 
 import { ProfileModel } from "../profile/profile.model";
 
-import { ApiError } from "../../utils/ApiError";
+import { ApiError } from "../../utils/apiError";
 
 export class UserService {
   private repo = new UserRepository();

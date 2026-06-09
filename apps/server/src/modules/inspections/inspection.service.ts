@@ -29,9 +29,11 @@ export class InspectionService {
 
     if (property.landlordId) {
       await this.notificationService.create(
-        property.landlordId.toString(),
-        "New Inspection Request",
-        `Someone wants to inspect your property: ${property.title}`
+        {
+          userId: property.landlordId.toString(),
+          title: "New Inspection Request",
+          message: `Someone wants to inspect your property: ${property.title}`
+        }
       );
     }
 
@@ -49,9 +51,11 @@ export class InspectionService {
 
     // Notify user
     await this.notificationService.create(
-      inspection?.userId?.toString() ?? "",
-      "Inspection Status Updated",
-      `Your inspection request has been ${status.toLowerCase()}`
+      {
+       userId: inspection?.userId?.toString() ?? "",
+        title: "Inspection Status Updated",
+        message: `Your inspection request has been ${status.toLowerCase()}`
+      }
     );
 
     return inspection;

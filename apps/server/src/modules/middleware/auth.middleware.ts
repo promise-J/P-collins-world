@@ -39,6 +39,10 @@ import { UserModel } from "../users/user.model";
   
       const userId = decoded.userId;
       const user = await UserModel.findById(userId);
+
+      if(!user){
+        return res.status(401).json({message: "User not found"})
+      }
       req.user = user;
   
     next();

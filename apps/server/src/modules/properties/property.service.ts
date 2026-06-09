@@ -1,6 +1,6 @@
 import { PropertyRepository } from "./property.repository";
 
-import { ApiError } from "../../utils/ApiError";
+import { ApiError } from "../../utils/apiError";
 
 export class PropertyService {
   private repo = new PropertyRepository();

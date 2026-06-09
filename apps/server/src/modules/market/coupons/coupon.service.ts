@@ -1,6 +1,6 @@
+import { ApiError } from "@/utils/apiError";
 import { CouponModel } from "./coupon.model";
 
-import { ApiError } from "../../../utils/ApiError";
 
 export class CouponService {
   async validateCoupon(code: string, orderAmount: number) {
