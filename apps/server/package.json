@@ -6,10 +6,10 @@
   "type": "module",
   "scripts": {
     "dev": "tsx watch src/server.ts",
-    "build": "pnpm run clean && tsc",
     "clean": "rm -rf dist",
-    "start": "node dist/server.js",
-    "prebuild": "pnpm run clean"
+    "prebuild": "pnpm run clean",
+    "start": "tsx src/server.ts",
+    "build": "echo 'No compilation needed for tsx entry'"
   },
   "keywords": [],
   "author": "",

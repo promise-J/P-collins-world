@@ -1,24 +1,26 @@
 {
-    "compilerOptions": {
-      "strict": true,
-      "skipLibCheck": true,
-      "target": "ES2022",
-      // 👇 FIX: Switched from NodeNext to unlock extensionless alias paths
-      "module": "ESNext",
-      "moduleResolution": "bundler",
-      "resolveJsonModule": true,
-      "esModuleInterop": true,
-      "types": ["node"],
-      "forceConsistentCasingInFileNames": true,
-      "typeRoots": ["./node_modules/@types", "./src/types"],
-      "outDir": "./dist",
-      "rootDir": "./src",
-      "removeComments": true,
-        "paths": {
-          "@/*": ["./src/*"]
-        }
-    },
-    "include": ["src/**/*"],
-    "exclude": ["node_modules", "dist"] 
-  }
-  
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "Bundler",
+    "lib": ["ES2022"],
+    "outDir": "./dist",
+    "rootDir": "./src",
+    "strict": true,
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "resolveJsonModule": true,
+    "declaration": false,
+    "removeComments": true,
+    "noEmitOnError": false,
+    "types": ["node"],
+    "noEmit": false,
+    "paths": {
+      "@/*": ["./src/*"]
+    }
+  },
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist", "coverage"]
+}
