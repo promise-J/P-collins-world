@@ -9,16 +9,18 @@
     "build": "tsc && vite build",
     "preview": "vite preview"
   },
+  "pnpm": {
+    "peerDependencyRules": {
+      "ignoreMissing": [
+        "react",
+        "react-dom"
+      ]
+    }
+  },
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "devEngines": {
-    "packageManager": {
-      "name": "pnpm",
-      "version": "^11.5.0",
-      "onFail": "download"
-    }
-  },
+  "packageManager": "pnpm@9.15.0", 
   "type": "module",
   "dependencies": {
     "@headlessui/react": "^2.2.10",
@@ -53,6 +55,7 @@
     "@types/react": "^19.2.16",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^6.0.2",
-    "vite": "^8.0.16"
+    "vite": "^8.0.16",
+    "typescript": "^5.3.3"
   }
 }

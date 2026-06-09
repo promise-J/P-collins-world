@@ -1,13 +1,13 @@
-import { authStore } from "../store/auth.store";
+import { useAuthStore } from "../store/auth.store";
 
 export function useAuth() {
-  const user = authStore((state) => state.user);
+  const user = useAuthStore((state) => state.user);
 
-  const token = authStore((state) => state.token);
+  const token = useAuthStore((state) => state.token);
 
-  const login = authStore((state) => state.login);
+  const login = useAuthStore((state) => state.login);
 
-  const logout = authStore((state) => state.logout);
+  const logout = useAuthStore((state) => state.logout);
 
   return {
     user,

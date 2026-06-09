@@ -1,17 +1,17 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
-import tailwindcss from "@tailwindcss/vite"; // 🟢 Added Tailwind v4 plugin
+import tailwindcss from "@tailwindcss/vite";
 import path from "node:path";
-import { fileURLToPath } from "node:url";   // 🟢 Added to fix modern ES modules
+import { fileURLToPath } from "node:url";
 
-// 🟢 FIX: Create __dirname manually for ESM ("type": "module") environments
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 export default defineConfig({
   plugins: [
     react(),
-    tailwindcss(), // 🟢 Added Tailwind plugin to processing pipeline
+    tailwindcss(),
   ],
   server: {
     port: 5173, 
@@ -22,4 +22,7 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  build: {
+    chunkSizeWarningLimit: 1000,
+  }
 });

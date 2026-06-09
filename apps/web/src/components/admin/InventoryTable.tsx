@@ -51,7 +51,7 @@ export function InventoryTable({ showLowStockOnly = false }: InventoryTableProps
           placeholder="Search products..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-brand-primary)]"
+          className="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-primary"
         />
       </div>
 
@@ -79,7 +79,7 @@ export function InventoryTable({ showLowStockOnly = false }: InventoryTableProps
                       className="w-12 h-12 rounded-lg object-cover"
                     />
                     <div>
-                      <p className="font-medium text-[var(--color-brand-text)]">{product.name}</p>
+                      <p className="font-medium text-brand-text">{product.name}</p>
                       <p className="text-xs text-gray-400">SKU: {product._id.slice(-8)}</p>
                     </div>
                   </div>

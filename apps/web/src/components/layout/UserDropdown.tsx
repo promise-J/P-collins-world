@@ -4,7 +4,7 @@ import { LogOut, User, Settings, ChevronDown } from "lucide-react";
 import { useAuthStore } from "../../store/auth.store";
 
 interface UserDropdownProps {
-  userName: string;
+  userName?: string;
   avatar?: string;
 }
 
@@ -34,7 +34,7 @@ export function UserDropdown({ userName, avatar }: UserDropdownProps) {
           <div className="fixed inset-0 z-40" onClick={() => setIsOpen(false)} />
           <div className="absolute right-0 mt-2 w-56 rounded-lg border border-gray-100 bg-white shadow-lg z-50 overflow-hidden">
             <div className="p-4 border-b border-gray-100">
-              <p className="font-medium text-[var(--color-brand-text)]">
+              <p className="font-medium text-brand-text">
                 {userName}
               </p>
             </div>
