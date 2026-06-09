@@ -17,13 +17,10 @@ export const notificationWorker = new Worker(
     logger.info(`Processing notification job ${job.id} for user ${userId}`);
 
     try {
-      // Save to database
       const notification = await notificationService.create({userId, title, message, type});
 
-      // Send real-time via socket
       emitEvent(SocketEvents.NOTIFICATION, userId, notification);
 
-      // Send email if requested
       if (sendEmail && emailData?.to) {
         await emailService.sendEmail(emailData.to, title, emailData.html || message);
       }
