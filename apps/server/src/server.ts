@@ -14,10 +14,12 @@ const server = http.createServer(app);
 
 const io = initSocket(server);
 
+const PORT = Number(process.env.PORT) || 10000; 
+
 const startServer = async () => {
   try {
-    server.listen(env.PORT, async () => {
-      logger.info(`Server and WebSockets running on port ${env.PORT}`);
+    server.listen(PORT,'0.0.0.0', async () => {
+      logger.info(`Server and WebSockets running on port ${PORT}`);
       connectRedis();
       await connectDatabase();
     });

@@ -246,6 +246,10 @@ export const useAuthStore = create<AuthState>()(
           }
         } catch (err: any) {
           const errorMessage = err.response?.data?.message || 'Google login failed';
+
+          const isPopupClosed = err.code === 'auth/popup-closed-by-user' || 
+          err.message?.includes('popup-closed-by-user');
+
           set({
             error: errorMessage,
             isLoading: false,

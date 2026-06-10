@@ -15,9 +15,6 @@ export const envSchema = z.object({
   CLOUDINARY_CLOUD_NAME: z.string(),
   CLOUDINARY_API_KEY: z.string(),
   CLOUDINARY_API_SECRET: z.string(),
-
-  REDIS_HOST: z.string(),
-  REDIS_PORT: z.string(),
   PAYSTACK_SECRET_KEY: z.string(),
   BREVO_API_KEY: z.string(),
   APP_NAME: z.string(),
