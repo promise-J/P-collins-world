@@ -31,6 +31,8 @@ export class AuthService {
       verificationExpires,
     });
 
+    console.log('called...')
+
 
     const verificationLink = `${process.env.WEB_URL}/verify-email/${verificationToken}`;
 
