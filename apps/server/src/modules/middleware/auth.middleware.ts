@@ -16,21 +16,15 @@ import { UserModel } from "../users/user.model";
     next: NextFunction
   ) => {
   
-    const authHeader =
-      req.headers.authorization;
+    const token = req.cookies.accessToken;
   
-    if(!authHeader){
+    if(!token){
   
       return res.status(401).json({
         message:"Unauthorized"
       });
     }
-  
-    const token =
-      authHeader.replace(
-        "Bearer ",
-        ""
-      );
+
   
     const decoded =
       JwtService.verifyAccessToken(

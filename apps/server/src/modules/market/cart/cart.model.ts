@@ -5,21 +5,21 @@ const cartSchema = new mongoose.Schema(
     userId: {
       type: mongoose.Types.ObjectId,
       ref: "User",
-      index: true
+      index: true,
     },
 
     items: [
       {
         productId: {
           type: mongoose.Types.ObjectId,
-          ref: "Product"
+          ref: "Product",
         },
 
         quantity: Number,
 
-        price: Number
-      }
-    ]
+        price: Number,
+      },
+    ],
   },
   { timestamps: true }
 );

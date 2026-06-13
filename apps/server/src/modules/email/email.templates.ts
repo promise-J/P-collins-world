@@ -49,9 +49,9 @@ export const welcomeEmail = (name: string) => `
       <p>Thank you for joining P Collins! We're excited to have you on board.</p>
       <p>With P Collins, you can:</p>
       <ul>
-        <li>🛒 Shop quality products from trusted vendors</li>
-        <li>💰 Save towards your financial goals</li>
-        <li>🏠 Find your dream property</li>
+        <li>Shop quality products from trusted vendors</li>
+        <li> Save towards your financial goals</li>
+        <li>Find your dream property</li>
       </ul>
       <p>Get started today and explore all the features we have to offer.</p>
     </div>

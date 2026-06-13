@@ -1,14 +1,14 @@
 import http from "http";
 import app from "./app.js";
-import { env } from "./config/env.js";
 import { connectDatabase } from "./config/database.js";
 import { logger } from "./config/logger.js";
 import { initSocket } from "./modules/realtime/socket/socket.server.js";
 import { connectRedis } from "./config/redis.js";
 
+
 // Import workers
-import "./modules/jobs/workers/email.worker.js";
-import "./modules/jobs/workers/notification.worker.js";
+// import "./modules/jobs/workers/email.worker.js";
+// import "./modules/jobs/workers/notification.worker.js";
 
 const server = http.createServer(app);
 
@@ -20,7 +20,7 @@ const startServer = async () => {
   try {
     server.listen(PORT,'0.0.0.0', async () => {
       logger.info(`Server and WebSockets running on port ${PORT}`);
-      connectRedis();
+      // connectRedis();
       await connectDatabase();
     });
   } catch (error) {

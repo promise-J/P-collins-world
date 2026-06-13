@@ -1,6 +1,7 @@
 import { ProductModel, ProductStatus } from "./product.model";
 import { ApiError } from "../../../utils/apiError";
 
+
 export class ProductService {
   async createProduct(data: any) {
     return ProductModel.create(data);
