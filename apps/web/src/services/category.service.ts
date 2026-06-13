@@ -31,4 +31,16 @@ export class CategoryService {
     const response = await api.delete(`/categories/${id}`);
     return response.data;
   }
+
+  static async getDummyCategories() {
+    return {
+      success: true,
+      data: [
+        { _id: "cat1", name: "Electronics", slug: "electronics" },
+        { _id: "cat2", name: "Audio", slug: "audio" },
+        { _id: "cat3", name: "Fashion", slug: "fashion" },
+        { _id: "cat4", name: "Home & Kitchen", slug: "home-kitchen" },
+      ],
+    };
+  }
 }

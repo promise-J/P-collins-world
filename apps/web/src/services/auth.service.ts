@@ -1,4 +1,5 @@
 import { api } from "@/lib/axios";
+import { User } from "@/types/user.type";
 
 
 export interface ApiResponse<T = any> {
@@ -19,7 +20,7 @@ export class AuthService {
     return response.data;
   }
 
-  static async login(payload: { email: string; password: string }): Promise<ApiResponse<{ user: any; accessToken: string; refreshToken: string }>> {
+  static async login(payload: { email: string; password: string }): Promise<ApiResponse<User>> {
     const response = await api.post("/auth/login", payload);
     return response.data;
   }

@@ -15,7 +15,6 @@ const queryClient = new QueryClient({
   },
 });
 
-// Initialize auth check
 import { useAuthStore } from './store/auth.store';
 useAuthStore.getState().checkAuth();
 
