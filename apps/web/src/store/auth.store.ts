@@ -3,30 +3,15 @@ import { persist } from 'zustand/middleware';
 import { AuthService, ApiResponse } from '@/services/auth.service';
 import { api } from '@/lib/axios';
 import { FirebaseService } from '@/services/firebase.service';
+import { UserRole } from '@/enum/role.enum';
+import { RegisterData, User, UserProfile } from '@/types/user.type';
 
-interface User {
-  _id: string;
-  firstName: string;
-  lastName: string;
-  email: string;
-  role: string;
-  isVerified: boolean;
-  avatar?: string;
-  phone?: string;
-  address?: string;
-}
 
-interface RegisterData {
-  firstName: string;
-  lastName: string;
-  email: string;
-  password: string;
-  phone?: string;
-}
+
 
 interface AuthState {
   user: User | null;
-  token: string | null;
+  profile: UserProfile | null
   isLoading: boolean;
   error: string | null;
   isAuthenticated: boolean;
@@ -41,27 +26,28 @@ interface AuthState {
   googleLogin: () => Promise<{ success: boolean; message?: string }>;
   checkAuth: () => Promise<void>;
   clearError: () => void;
+  setUser: (user: User | null) => void;
+  setProfile: (user: UserProfile | null) => void;
 }
 
 export const useAuthStore = create<AuthState>()(
   persist(
     (set, get) => ({
       user: null,
-      token: null,
+      profile: null,
       isLoading: true,
       error: null,
       isAuthenticated: false,
 
       checkAuth: async () => {
-        const token = get().token || localStorage.getItem('token');
         
-        if (!token) {
+        const localAuthStore = JSON.parse(localStorage.getItem('auth-storage') || "")
+        if (!localAuthStore.state.isAuthenticated) {
           set({ isLoading: false, isAuthenticated: false });
           return;
         }
 
         try {
-          api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
           const response: ApiResponse = await AuthService.me();
           
           if (response.success && response.data) {
@@ -79,7 +65,6 @@ export const useAuthStore = create<AuthState>()(
           delete api.defaults.headers.common['Authorization'];
           set({
             user: null,
-            token: null,
             isAuthenticated: false,
             isLoading: false,
           });
@@ -92,17 +77,13 @@ export const useAuthStore = create<AuthState>()(
           const response = await AuthService.login({ email, password });
           
           if (response.success && response.data) {
-            const { user, accessToken } = response.data;
-            
+            const user = response.data;
+
             set({
               user,
-              token: accessToken,
               isAuthenticated: true,
               isLoading: false,
             });
-            
-            localStorage.setItem('token', accessToken);
-            api.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
             
             return { success: true, message: response.message };
           } else {
@@ -146,6 +127,19 @@ export const useAuthStore = create<AuthState>()(
           return { success: false, message: errorMessage };
         }
       },
+      getUser: async () => {
+        try {
+         const user = get().user;
+         return {success: true, message: user}
+        } catch (err: any) {
+          const errorMessage = err.response?.data?.message || 'Registration failed';
+          set({
+            error: errorMessage,
+            isLoading: false,
+          });
+          return { success: false, message: errorMessage };
+        }
+      },
 
       logout: async () => {
         set({ isLoading: true });
@@ -157,7 +151,6 @@ export const useAuthStore = create<AuthState>()(
         } finally {
           set({
             user: null,
-            token: null,
             isAuthenticated: false,
             isLoading: false,
           });
@@ -224,17 +217,14 @@ export const useAuthStore = create<AuthState>()(
           const response = await FirebaseService.signInWithGoogle();
           
           if (response.success && response.data) {
-            const { user, accessToken } = response.data;
+            const { user } = response.data;
             
             set({
               user,
-              token: accessToken,
               isAuthenticated: true,
               isLoading: false,
             });
             
-            localStorage.setItem('token', accessToken);
-            api.defaults.headers.common['Authorization'] = `Bearer ${accessToken}`;
             
             return { success: true, message: response.message };
           } else {
@@ -257,13 +247,19 @@ export const useAuthStore = create<AuthState>()(
           return { success: false, message: errorMessage };
         }
       },
+      setUser: (user) => set({ user }),
+      setProfile: (profile) => set({ profile }),
+
+      partialize: (state: AuthState) => ({ 
+      user: state.user, 
+      isAuthenticated: state.isAuthenticated 
+      }),
 
       clearError: () => set({ error: null }),
     }),
     {
       name: 'auth-storage',
       partialize: (state) => ({ 
-        token: state.token, 
         user: state.user, 
         isAuthenticated: state.isAuthenticated 
       }),
@@ -271,10 +267,9 @@ export const useAuthStore = create<AuthState>()(
   )
 );
 
-// Auto-initialize auth on module load
-const token = localStorage.getItem('token');
-if (token) {
-  useAuthStore.getState().checkAuth();
-} else {
-  useAuthStore.setState({ isLoading: false });
-}
+// const token = localStorage.getItem('token');
+// if (token) {
+//   useAuthStore.getState().checkAuth();
+// } else {
+//   useAuthStore.setState({ isLoading: false });
+// }

@@ -23,6 +23,9 @@ import { ProtectedRoute } from "./ui/guards/ProtectedRoute";
 import HomePage from "./pages/home/HomePage";
 import CheckEmailPage from "./pages/auth/CheckEmailPage";
 import { LoadingScreen } from "./ui/feedback/LoadingScreen";
+import CreatePropertyPage from "./pages/properties/CreateProperty";
+import ComparePropertiesPage from "./pages/properties/ComparePropertyPage";
+import CreateProductPage from "./pages/properties/CreateProductPage";
 
 function App() {
   const { isAuthenticated, isLoading } = useAuthStore();
@@ -67,7 +70,11 @@ function App() {
           <Route path="/verify-email/:token" element={<VerifyEmailPage />} />
           <Route path="/products" element={<ProductsPage />} />
           <Route path="/products/:id" element={<ProductDetailsPage />} />
+          <Route path="/products/create" element={<CreateProductPage />} />
+
           <Route path="/properties" element={<PropertiesPage />} />
+          <Route path="/properties/create" element={<CreatePropertyPage />} />
+          <Route path="/properties/compare" element={<ComparePropertiesPage />} />
           <Route path="/properties/:id" element={<PropertyDetailsPage />} />
         </Route>
 
