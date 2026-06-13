@@ -19,6 +19,6 @@ router.get("/verify-email/:token", asyncHandler(controller.verifyEmail));
 router.post("/resend-verification", asyncHandler(controller.resendVerification));
 
 // Protected routes
-router.post("/logout", authenticate, asyncHandler(controller.logout));
+router.get("/logout", authenticate, asyncHandler(controller.logout));
 
 export default router;

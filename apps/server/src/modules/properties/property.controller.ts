@@ -8,12 +8,28 @@ export class PropertyController {
   private service = new PropertyService();
 
   create = async (req: Request, res: Response) => {
-    const property = await this.service.createProperty(
-      req.body,
-      req.user?.id || ""
-    );
+    try {
+      const { body, files, user } = req;
+      const fileList = files as Express.Multer.File[];
 
-    return apiResponse(res, true, "Property created", property);
+      const media = fileList?.map((file: any) => ({
+        url: file.path,
+        publicId: file.filename,
+        type: "image"
+      })) || [];
+      
+      const propertyData = {
+        ...body,
+        media,
+        landlordId: user?._id ?? "",
+        approvalStatus: "pending"
+      };
+      
+      const property = await this.service.createProperty(propertyData, user?._id.toString() ?? "");
+      return apiResponse(res, true, "Property created successfully", property);
+    } catch (error) {
+      return apiResponse(res, false, "Failed to create property");
+    }
   };
 
   getOne = async (req: Request, res: Response) => {

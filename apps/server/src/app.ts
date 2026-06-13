@@ -3,12 +3,14 @@ import helmet from "helmet";
 import cors from "cors";
 import compression from "compression";
 import rateLimit from "express-rate-limit";
+import cookieParser from "cookie-parser";
 import swaggerUi from "swagger-ui-express";
 import { swaggerSpec } from "./docs/swagger.js";
 import { requestLogger } from "./middleware/request-logger.middleware";
 import { errorMiddleware } from "./middleware/error.middleware";
 import { notFoundMiddleware } from "./middleware/not-found.middleware";
 import allRoutes from "./routes/index";
+
 
 const app = express();
 
@@ -33,6 +35,7 @@ app.use(cors({
 app.use(compression());
 
 app.use(express.json());
+app.use(cookieParser()); 
 
 app.use(
   rateLimit({

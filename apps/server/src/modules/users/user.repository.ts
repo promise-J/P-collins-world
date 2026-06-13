@@ -15,6 +15,9 @@ export class UserRepository {
   async findById(id: string) {
     return UserModel.findById(id);
   }
+  async update(id: string, data: any){
+    return UserModel.findByIdAndUpdate(id, data, {new: true})
+  }
   async findOne(query: any) {
     return UserModel.findOne(query);
   }
