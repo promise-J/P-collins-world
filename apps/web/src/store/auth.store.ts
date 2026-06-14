@@ -267,9 +267,11 @@ export const useAuthStore = create<AuthState>()(
   )
 );
 
-// const token = localStorage.getItem('token');
-// if (token) {
-//   useAuthStore.getState().checkAuth();
-// } else {
-//   useAuthStore.setState({ isLoading: false });
-// }
+const localAuthStore = JSON.parse(localStorage.getItem('auth-storage') || '{}');
+if(localAuthStore){
+  if (localAuthStore?.state?.isAuthenticated) {
+    useAuthStore.getState().checkAuth();
+  } else {
+    useAuthStore.setState({ isLoading: false });
+  }
+}
