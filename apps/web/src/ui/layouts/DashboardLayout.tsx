@@ -4,7 +4,12 @@ import { Sidebar } from "../navigation/Sidebar";
 import { MobileSidebar } from "../navigation/MobileSidebar";
 import { MobileBottomNav } from "../navigation/MobileBottomNav";
 import { Header } from "../navigation/Header";
-import { USER_MENU, ADMIN_MENU } from "../../config/sidebar.config";
+import { 
+  USER_MENU, 
+  AGENT_MENU, 
+  LANDLORD_MENU, 
+  ADMIN_MENU 
+} from "../../config/sidebar.config";
 import { useAuthStore } from "../../store/auth.store";
 import { DashboardFooter } from "./DashboardFooter";
 
@@ -12,8 +17,22 @@ export function DashboardLayout() {
   const { user } = useAuthStore();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   
-  const isAdmin = user?.role === "ADMIN" || user?.role === "SUPER_ADMIN";
-  const menuItems = isAdmin ? ADMIN_MENU : USER_MENU;
+  // Get role-based menu items
+  const getMenuItems = () => {
+    switch (user?.role) {
+      case "ADMIN":
+      case "SUPER_ADMIN":
+        return ADMIN_MENU;
+      case "AGENT":
+        return AGENT_MENU;
+      case "LANDLORD":
+        return LANDLORD_MENU;
+      default:
+        return USER_MENU;
+    }
+  };
+
+  const menuItems = getMenuItems();
 
   return (
     <div className="flex min-h-screen bg-gray-50">
@@ -39,7 +58,6 @@ export function DashboardLayout() {
         </main>
         
         <DashboardFooter />
-        
         <MobileBottomNav />
       </div>
     </div>

@@ -1,28 +1,73 @@
-import { useAuthStore } from '@/store/auth.store';
-import { Button } from '@/ui/components/Button';
-import { useNavigate } from 'react-router-dom';
-import toast from 'react-hot-toast';
+import { useState } from "react";
+import { useAuthStore } from "@/store/auth.store";
+import { Button } from "@/ui/components/Button";
+import { useNavigate } from "react-router-dom";
+import toast from "react-hot-toast";
+import { UserRole } from "@/enum/role.enum";
+import { GoogleAuthProvider, signInWithPopup } from "firebase/auth";
+import { auth } from "@/config/firebase.config";
 
-export function GoogleSignInButton() {
-  const { googleLogin, isLoading } = useAuthStore();
+interface GoogleSignInButtonProps {
+  variant?: "primary" | "secondary" | "ghost" | "outline";
+  className?: string;
+  preselectedRole?: UserRole;
+}
+
+export function GoogleSignInButton({ 
+  variant = "ghost", 
+  className = "",
+  preselectedRole = UserRole.USER
+}: GoogleSignInButtonProps) {
+  const { googleLogin } = useAuthStore();
   const navigate = useNavigate();
+  const [isLoading, setIsLoading] = useState(false);
 
   const handleGoogleSignIn = async () => {
-    const result = await googleLogin();
-    if (result.success) {
-      toast.success('Google login successful!');
-      navigate('/dashboard');
-    } else {
-      toast.error(result.message || 'Google login failed');
+    setIsLoading(true);
+    try {
+      const provider = new GoogleAuthProvider();
+      provider.setCustomParameters({
+        prompt: 'select_account'
+      });
+      
+      const result = await signInWithPopup(auth, provider);
+      const user = result.user;
+      
+      // Get the ID token
+      const idToken = await user.getIdToken();
+      
+      // Send the data with the preselected role
+      const response = await googleLogin({
+        firebaseId: user.uid,
+        email: user.email,
+        firstName: user.displayName?.split(' ')[0] || '',
+        lastName: user.displayName?.split(' ')[1] || '',
+        avatar: user.photoURL || '',
+        idToken: idToken,
+        role: preselectedRole, // Use the preselected role from the page
+      });
+
+      if (response.success) {
+        toast.success('Google login successful!');
+        window.location.replace('/dashboard')
+      } else if (response.requiresRoleSelection) {
+        navigate('/role-selection?mode=login');
+      }
+    } catch (error: any) {
+      console.error('Google Sign-In Error:', error);
+    } finally {
+      setIsLoading(false);
     }
   };
+
 
   return (
     <Button
       type="button"
+      variant={'ghost'}
       onClick={handleGoogleSignIn}
       disabled={isLoading}
-      className="w-full flex items-center justify-center gap-2"
+      className={`w-full flex items-center justify-center gap-2 ${className}`}
     >
       <svg className="w-5 h-5" viewBox="0 0 24 24">
         <path
@@ -42,7 +87,7 @@ export function GoogleSignInButton() {
           d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
         />
       </svg>
-      Continue with Google
+      {isLoading ? "Signing in..." : "Continue with Google"}
     </Button>
   );
 }

@@ -4,7 +4,6 @@ import { AuthRepository } from "./auth.repository";
 import { JwtService } from "../services/jwt.service";
 import { serviceResponse } from "@/utils/apiResponse";
 import { UserModel } from "../users/user.model";
-import { emailQueue } from "../jobs/queues/email.queue";
 import {
   welcomeEmail,
   verificationEmail,
@@ -12,6 +11,7 @@ import {
 } from "../email/email.templates";
 import { firebaseAdmin } from "@/config/firebase-admin.config";
 import { emailAction } from "../email/email-action.service";
+import { UserRole } from "@/enum/role.enum";
 
 export class AuthService {
   private repository = new AuthRepository();
@@ -29,25 +29,19 @@ export class AuthService {
     const verificationToken = crypto.randomBytes(32).toString("hex");
     const verificationExpires = new Date(Date.now() + 60 * 15 * 1000);
 
+    const role = data.role || UserRole.USER;
+
     const user = await this.repository.createUser({
       ...data,
       password: hashedPassword,
       verificationToken,
       verificationExpires,
+      role,
+      verifiedAgent: role === UserRole.AGENT ? false : undefined,
+      verifiedLandlord: role === UserRole.LANDLORD ? false : undefined,
     });
 
     const verificationLink = `${process.env.WEB_URL}/verify-email/${verificationToken}`;
-
-    await emailAction({
-      action: "welcomeEmail",
-      options: {
-        to: user.email,
-        subject: "Welcome to P Collins",
-        html: welcomeEmail(user.firstName),
-      },
-    });
-
-    await new Promise((resolve) => setTimeout(resolve, 3000));
 
     await emailAction({
       action: "sendVerificationEmail",
@@ -65,15 +59,22 @@ export class AuthService {
     );
   }
 
-  async login(email: string, password?: string) {
+  async login(email: string, password: string, role: string) {
     if (!password) {
       return serviceResponse(false, "Invalid credentials");
+    }
+    if (!role) {
+      return serviceResponse(false, "Please provide a role");
     }
 
     const user = await this.repository.findByEmail(email);
 
     if (!user) {
-      return serviceResponse(false, "Invalid credentials");
+      return serviceResponse(false, "You are not registered");
+    }
+
+    if (user?.role !== role) {
+      return serviceResponse(false, "Account for this role does not exists");
     }
 
     if (!user.isVerified) {
@@ -122,75 +123,101 @@ export class AuthService {
     });
   }
 
-  async googleAuth(data: {
-    firebaseId: string;
-    email: string;
-    firstName: string;
-    lastName: string;
-    avatar?: string;
+  async googleAuth(data: { 
+    firebaseId: string; 
+    email: string; 
+    firstName: string; 
+    lastName: string; 
+    avatar?: string; 
     idToken: string;
+    role?: string;
+    businessName?: string;
   }) {
     try {
-      const decodedToken = await firebaseAdmin
-        .auth()
-        .verifyIdToken(data.idToken);
-
+      const decodedToken = await firebaseAdmin.auth().verifyIdToken(data.idToken);
+      
       if (decodedToken.uid !== data.firebaseId) {
         return serviceResponse(false, "Invalid token");
       }
-
+  
       let user = await this.repository.findByFirebaseId(data.firebaseId);
-
+      let isNewUser = false;
+  
       if (!user) {
         user = await this.repository.findByEmail(data.email);
+        
+        if (user) {
+          user = await this.repository.updateFirebaseId(user._id.toString(), data.firebaseId);
+        }
       }
-
+      
       if (!user) {
+        const role = data.role || UserRole.USER;
+        
         user = await this.repository.createUser({
           firstName: data.firstName,
           lastName: data.lastName,
           email: data.email,
           avatar: data.avatar,
           firebaseId: data.firebaseId,
-          isVerified: true, 
-          password: Math.random().toString(36), 
+          isVerified: true,
+          role: role,
+          businessName: data.businessName,
+          password: Math.random().toString(36),
+          verifiedAgent: role === UserRole.AGENT ? false : undefined,
+          verifiedLandlord: role === UserRole.LANDLORD ? false : undefined,
         });
-      } else if (!user.firebaseId) {
-        // Link existing user with firebaseId
-        user = await this.repository.updateFirebaseId(
-          user._id.toString(),
-          data.firebaseId
-        );
+        isNewUser = true;
+      } else {
+        const requestedRole = data.role || UserRole.USER;
+        const userRole = user.role || UserRole.USER;
+        
+        if (userRole !== requestedRole) {
+          return serviceResponse(false, `This account is registered as ${userRole}. Please sign in as ${userRole}.`, {
+            userRole: userRole,
+            requestedRole: requestedRole,
+            mismatch: true,
+          });
+        }
       }
-
-      const accessToken = JwtService.signAccessToken(
-        user?._id.toString() ?? ""
-      );
-      const refreshToken = JwtService.signRefreshToken(
-        user?._id.toString() ?? ""
-      );
-
-      await this.repository.updateRefreshToken(
-        user?._id.toString() ?? "",
-        refreshToken
-      );
-
+      
+      const accessToken = JwtService.signAccessToken(user._id.toString());
+      const refreshToken = JwtService.signRefreshToken(user._id.toString());
+      
+      await this.repository.updateRefreshToken(user._id.toString(), refreshToken);
+      
       const userData = {
-        _id: user?._id,
-        firstName: user?.firstName,
-        lastName: user?.lastName,
-        email: user?.email,
-        avatar: user?.avatar,
-        role: user?.role,
+        _id: user._id,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
+        avatar: user.avatar,
+        role: user.role,
+        businessName: user.businessName,
+        isVerified: user.isVerified,
+        verifiedAgent: user.verifiedAgent,
+        verifiedLandlord: user.verifiedLandlord,
       };
-
+      
+      if (isNewUser) {
+        await emailAction({
+          action: "welcomeEmail",
+          options: {
+            to: userData.email,
+            subject: "Welcome to P Collins",
+            html: welcomeEmail(userData.firstName, userData.role),
+          },
+        });
+      }
+      
       return serviceResponse(true, "Google login successful", {
         user: userData,
         accessToken,
         refreshToken,
+        isNewUser,
       });
     } catch (error) {
-      console.error("Google auth error:", error);
+      console.error('Google auth error:', error);
       return serviceResponse(false, "Google authentication failed");
     }
   }
@@ -228,6 +255,15 @@ export class AuthService {
     user.verificationExpires = undefined;
     await user.save();
 
+    await emailAction({
+      action: "welcomeEmail",
+      options: {
+        to: user.email,
+        subject: "Welcome to P Collins",
+        html: welcomeEmail(user.firstName, user.role),
+      },
+    });
+
     return serviceResponse(true, "Email verified successfully");
   }
 
@@ -251,7 +287,7 @@ export class AuthService {
     await user.save();
 
     const resetLink = `${process.env.WEB_URL}/reset-password/${resetToken}`;
-   
+
     await emailAction({
       action: "forgotPasswordEmail",
       options: {
@@ -305,7 +341,6 @@ export class AuthService {
     await user.save();
 
     const verificationLink = `${process.env.WEB_URL}/verify-email/${verificationToken}`;
-
 
     await emailAction({
       action: "resendVerificationEmail",

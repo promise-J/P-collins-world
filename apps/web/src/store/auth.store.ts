@@ -16,14 +16,14 @@ interface AuthState {
   error: string | null;
   isAuthenticated: boolean;
   
-  login: (email: string, password: string) => Promise<{ success: boolean; message?: string }>;
+  login: (email: string, password: string, role: string) => Promise<{ success: boolean; message?: string }>;
   register: (data: RegisterData) => Promise<{ success: boolean; message?: string }>;
   logout: () => Promise<void>;
   verifyEmail: (token: string) => Promise<{ success: boolean; message?: string }>;
   forgotPassword: (email: string) => Promise<{ success: boolean; message?: string }>;
   resetPassword: (token: string, password: string) => Promise<{ success: boolean; message?: string }>;
   resendVerification: (email: string) => Promise<{ success: boolean; message?: string }>;
-  googleLogin: () => Promise<{ success: boolean; message?: string }>;
+  googleLogin: (data?: any) => Promise<{ success: boolean; message?: string; requiresRoleSelection?: boolean, data?: any }>;
   checkAuth: () => Promise<void>;
   clearError: () => void;
   setUser: (user: User | null) => void;
@@ -71,10 +71,10 @@ export const useAuthStore = create<AuthState>()(
         }
       },
 
-      login: async (email, password) => {
+      login: async (email, password, role) => {
         set({ isLoading: true, error: null });
         try {
-          const response = await AuthService.login({ email, password });
+          const response = await AuthService.login({ email, password, role });
           
           if (response.success && response.data) {
             const user = response.data;
@@ -211,20 +211,34 @@ export const useAuthStore = create<AuthState>()(
         }
       },
 
-      googleLogin: async () => {
+      googleLogin: async (data?: any) => {
         set({ isLoading: true, error: null });
         try {
-          const response = await FirebaseService.signInWithGoogle();
-          
+          const response = await FirebaseService.signInWithGoogle(data);
           if (response.success && response.data) {
-            const { user } = response.data;
+            const { user, isNewUser, firebaseId, email, firstName, lastName, avatar, idToken } = response.data;
+            
+            if (isNewUser) {
+              set({ isLoading: false });
+              return { 
+                success: true, 
+                requiresRoleSelection: true,
+                data: {
+                  firebaseId,
+                  email,
+                  firstName,
+                  lastName,
+                  avatar,
+                  idToken,
+                }
+              };
+            }
             
             set({
               user,
               isAuthenticated: true,
               isLoading: false,
             });
-            
             
             return { success: true, message: response.message };
           } else {
@@ -235,13 +249,8 @@ export const useAuthStore = create<AuthState>()(
             return { success: false, message: response.message };
           }
         } catch (err: any) {
-          const errorMessage = err.response?.data?.message || 'Google login failed';
-
-          const isPopupClosed = err.code === 'auth/popup-closed-by-user' || 
-          err.message?.includes('popup-closed-by-user');
-
+          const errorMessage = err.response?.data?.message || err.message || 'Google login failed';
           set({
-            error: errorMessage,
             isLoading: false,
           });
           return { success: false, message: errorMessage };

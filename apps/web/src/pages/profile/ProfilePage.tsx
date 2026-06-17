@@ -1,65 +1,72 @@
-import { useState } from 'react';
-import { useAuthStore } from '@/store/auth.store';
-import { ProfileService } from '@/services/profile.service';
-import { Button, Card, Input, TextArea, Spinner } from '@/ui';
-import { 
-  User, 
-  Mail, 
-  Phone, 
-  MapPin, 
-  Briefcase, 
-  Building2, 
+import { useState } from "react";
+import { useAuthStore } from "@/store/auth.store";
+import { ProfileService } from "@/services/profile.service";
+import { Button, Card, Input, TextArea, Spinner } from "@/ui";
+import {
+  User,
+  Mail,
+  Phone,
+  MapPin,
+  Briefcase,
+  Building2,
   Banknote,
   Bell,
   Shield,
   Camera,
   Save,
-  X
-} from 'lucide-react';
-import toast from 'react-hot-toast';
-import { motion } from 'framer-motion';
+  X,
+} from "lucide-react";
+import toast from "react-hot-toast";
+import { motion } from "framer-motion";
 
 export default function ProfilePage() {
   const { user, setUser, profile, setProfile } = useAuthStore();
   const [isLoading, setIsLoading] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
-  const [activeTab, setActiveTab] = useState<'personal' | 'bank' | 'preferences' | 'security'>('personal');
-  
+  const [showRoleChange, setShowRoleChange] = useState(false);
+  const [activeTab, setActiveTab] = useState<
+    "personal" | "bank" | "preferences" | "security"
+  >("personal");
+
   // Form states
   const [formData, setFormData] = useState({
-    firstName: user?.firstName || '',
-    lastName: user?.lastName || '',
-    email: user?.email || '',
-    phone: user?.phone || '',
-    address: profile?.address || '',
-    city: profile?.city || '',
-    state: profile?.state || '',
-    country: profile?.country || 'Nigeria',
-    bio: profile?.bio || '',
-    occupation: profile?.occupation || '',
+    firstName: user?.firstName || "",
+    lastName: user?.lastName || "",
+    email: user?.email || "",
+    phone: user?.phone || "",
+    address: profile?.address || "",
+    city: profile?.city || "",
+    state: profile?.state || "",
+    country: profile?.country || "Nigeria",
+    bio: profile?.bio || "",
+    occupation: profile?.occupation || "",
   });
-  
+
   const [bankDetails, setBankDetails] = useState({
-    bankName: profile?.bankDetails?.bankName || '',
-    accountNumber: profile?.bankDetails?.accountNumber || '',
-    accountName: profile?.bankDetails?.accountName || '',
+    bankName: profile?.bankDetails?.bankName || "",
+    accountNumber: profile?.bankDetails?.accountNumber || "",
+    accountName: profile?.bankDetails?.accountName || "",
   });
-  
+
   const [preferences, setPreferences] = useState({
     emailNotifications: profile?.preferences?.emailNotifications ?? true,
     smsNotifications: profile?.preferences?.smsNotifications ?? false,
   });
-  
+
   const [passwordData, setPasswordData] = useState({
-    currentPassword: '',
-    newPassword: '',
-    confirmPassword: '',
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: "",
   });
-  
-  const [avatarPreview, setAvatarPreview] = useState(user?.avatar || '');
+
+  const [avatarPreview, setAvatarPreview] = useState(user?.avatar || "");
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+  const handleInputChange = (
+    e: React.ChangeEvent<
+      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
+    >
+  ) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
@@ -92,16 +99,16 @@ export default function ProfilePage() {
     setIsLoading(true);
     try {
       const response = await ProfileService.updateAvatar(avatarFile);
-      if(user){
+      if (user) {
         if (response.success) {
           const { _id, ...userWithoutId } = user;
-  
+
           setUser({ ...userWithoutId, avatar: response.data.url, _id: _id! });
-          toast.success('Profile picture updated!');
+          toast.success("Profile picture updated!");
         }
       }
     } catch (error) {
-      toast.error('Failed to update profile picture');
+      toast.error("Failed to update profile picture");
     } finally {
       setIsLoading(false);
     }
@@ -112,15 +119,15 @@ export default function ProfilePage() {
     try {
       const response = await ProfileService.updateProfile(formData);
       if (response.success) {
-        if(user){
+        if (user) {
           const { _id, ...userWithoutId } = user;
           setUser({ ...userWithoutId, ...formData, _id: _id! });
-          toast.success('Profile updated successfully!');
+          toast.success("Profile updated successfully!");
           setIsEditing(false);
         }
       }
     } catch (error) {
-      toast.error('Failed to update profile');
+      toast.error("Failed to update profile");
     } finally {
       setIsLoading(false);
     }
@@ -130,15 +137,15 @@ export default function ProfilePage() {
     setIsLoading(true);
     try {
       const response = await ProfileService.updateBankDetails(bankDetails);
-      if(profile){
+      if (profile) {
         if (response.success) {
-          const {_id, userId, ...profileWithoutId} = profile
+          const { _id, userId, ...profileWithoutId } = profile;
           setProfile({ ...profileWithoutId, bankDetails, _id: _id, userId });
-          toast.success('Bank details updated!');
+          toast.success("Bank details updated!");
         }
       }
     } catch (error) {
-      toast.error('Failed to update bank details');
+      toast.error("Failed to update bank details");
     } finally {
       setIsLoading(false);
     }
@@ -146,14 +153,14 @@ export default function ProfilePage() {
 
   const updatePassword = async () => {
     if (passwordData.newPassword !== passwordData.confirmPassword) {
-      toast.error('New passwords do not match');
+      toast.error("New passwords do not match");
       return;
     }
     if (passwordData.newPassword.length < 8) {
-      toast.error('Password must be at least 8 characters');
+      toast.error("Password must be at least 8 characters");
       return;
     }
-    
+
     setIsLoading(true);
     try {
       const response = await ProfileService.updatePassword(
@@ -161,29 +168,37 @@ export default function ProfilePage() {
         passwordData.newPassword
       );
       if (response.success) {
-        toast.success('Password changed successfully!');
-        setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
+        toast.success("Password changed successfully!");
+        setPasswordData({
+          currentPassword: "",
+          newPassword: "",
+          confirmPassword: "",
+        });
       }
     } catch (error: any) {
-      toast.error(error.response?.data?.message || 'Failed to change password');
+      toast.error(error.response?.data?.message || "Failed to change password");
     } finally {
       setIsLoading(false);
     }
   };
 
   const tabs = [
-    { id: 'personal', label: 'Personal Info', icon: User },
-    { id: 'bank', label: 'Bank Details', icon: Banknote },
-    { id: 'preferences', label: 'Preferences', icon: Bell },
-    { id: 'security', label: 'Security', icon: Shield },
+    { id: "personal", label: "Personal Info", icon: User },
+    { id: "bank", label: "Bank Details", icon: Banknote },
+    { id: "preferences", label: "Preferences", icon: Bell },
+    { id: "security", label: "Security", icon: Shield },
   ];
 
   return (
     <div className="max-w-6xl mx-auto">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-[var(--color-brand-text)]">Profile Settings</h1>
-        <p className="text-gray-500 mt-1">Manage your account information and preferences</p>
+        <h1 className="text-3xl font-bold text-[var(--color-brand-text)]">
+          Profile Settings
+        </h1>
+        <p className="text-gray-500 mt-1">
+          Manage your account information and preferences
+        </p>
       </div>
 
       <div className="flex flex-col lg:flex-row gap-8">
@@ -195,18 +210,31 @@ export default function ProfilePage() {
               <div className="relative inline-block">
                 <div className="w-32 h-32 rounded-full overflow-hidden bg-gray-100 border-4 border-white shadow-lg">
                   {avatarPreview ? (
-                    <img src={avatarPreview} alt="Avatar" className="w-full h-full object-cover" />
+                    <img
+                      src={avatarPreview}
+                      alt="Avatar"
+                      className="w-full h-full object-cover"
+                    />
                   ) : (
                     <div className="w-full h-full bg-gradient-to-br from-[var(--color-brand-primary)] to-[var(--color-brand-primary-dark)] flex items-center justify-center">
                       <span className="text-4xl text-white">
-                        {user?.firstName?.charAt(0)}{user?.lastName?.charAt(0)}
+                        {user?.firstName?.charAt(0)}
+                        {user?.lastName?.charAt(0)}
                       </span>
                     </div>
                   )}
                 </div>
                 <label className="absolute bottom-0 right-0 p-1.5 bg-white rounded-full shadow-lg cursor-pointer hover:bg-gray-100 transition-colors">
-                  <Camera size={16} className="text-[var(--color-brand-primary)]" />
-                  <input type="file" accept="image/*" className="hidden" onChange={handleAvatarChange} />
+                  <Camera
+                    size={16}
+                    className="text-[var(--color-brand-primary)]"
+                  />
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={handleAvatarChange}
+                  />
                 </label>
               </div>
               {avatarFile && (
@@ -222,7 +250,9 @@ export default function ProfilePage() {
                 {user?.firstName} {user?.lastName}
               </h2>
               <p className="text-sm text-gray-500">{user?.email}</p>
-              <p className="text-xs text-gray-400 mt-1 capitalize">{user?.role}</p>
+              <p className="text-xs text-gray-400 mt-1 capitalize">
+                {user?.role}
+              </p>
             </div>
 
             {/* Navigation Tabs */}
@@ -234,9 +264,10 @@ export default function ProfilePage() {
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id as any)}
                     className={`w-full flex items-center gap-3 px-4 py-2.5 rounded-lg transition-all duration-200
-                      ${activeTab === tab.id 
-                        ? 'bg-[var(--color-brand-primary)] text-white' 
-                        : 'text-gray-600 hover:bg-gray-100'
+                      ${
+                        activeTab === tab.id
+                          ? "bg-[var(--color-brand-primary)] text-white"
+                          : "text-gray-600 hover:bg-gray-100"
                       }
                     `}
                   >
@@ -252,7 +283,7 @@ export default function ProfilePage() {
         {/* Main Content */}
         <div className="flex-1">
           {/* Personal Info Tab */}
-          {activeTab === 'personal' && (
+          {activeTab === "personal" && (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -260,18 +291,32 @@ export default function ProfilePage() {
             >
               <Card>
                 <div className="flex justify-between items-center mb-6">
-                  <h2 className="text-xl font-semibold text-[var(--color-brand-text)]">Personal Information</h2>
+                  <h2 className="text-xl font-semibold text-[var(--color-brand-text)]">
+                    Personal Information
+                  </h2>
                   {!isEditing ? (
-                    <Button onClick={() => setIsEditing(true)} variant="secondary">
+                    <Button
+                      onClick={() => setIsEditing(true)}
+                      variant="secondary"
+                    >
                       Edit Profile
                     </Button>
                   ) : (
                     <div className="flex gap-2">
-                      <Button onClick={() => setIsEditing(false)} variant="ghost">
+                      <Button
+                        onClick={() => setIsEditing(false)}
+                        variant="ghost"
+                      >
                         <X size={16} className="mr-1" />
                       </Button>
                       <Button onClick={updateProfile} disabled={isLoading}>
-                        {isLoading ? <Spinner size="sm" /> : <><Save size={16} className="mr-1" />  </>}
+                        {isLoading ? (
+                          <Spinner size="sm" />
+                        ) : (
+                          <>
+                            <Save size={16} className="mr-1" />{" "}
+                          </>
+                        )}
                       </Button>
                     </div>
                   )}
@@ -369,13 +414,34 @@ export default function ProfilePage() {
                     placeholder="Tell us a little about yourself..."
                     rows={3}
                   />
+                  {user?.role === "USER" && (
+                    <div className="mt-6 p-4 border rounded-lg">
+                      <h3 className="font-medium text-[var(--color-brand-text)]">
+                        Upgrade Your Account
+                      </h3>
+                      <p className="text-sm text-gray-500 mt-1">
+                        Upgrade to a business account to unlock more features.
+                      </p>
+                      <div className="flex gap-2 mt-3">
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          onClick={() => {
+                            /* Show role selection */
+                          }}
+                        >
+                          Upgrade Account
+                        </Button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </Card>
             </motion.div>
           )}
 
           {/* Bank Details Tab */}
-          {activeTab === 'bank' && (
+          {activeTab === "bank" && (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -383,9 +449,11 @@ export default function ProfilePage() {
             >
               <Card>
                 <div className="flex justify-between items-center mb-6">
-                  <h2 className="text-xl font-semibold text-[var(--color-brand-text)]">Bank Details</h2>
+                  <h2 className="text-xl font-semibold text-[var(--color-brand-text)]">
+                    Bank Details
+                  </h2>
                   <Button onClick={updateBankDetails} disabled={isLoading}>
-                    {isLoading ? <Spinner size="sm" /> : 'Save Bank Details'}
+                    {isLoading ? <Spinner size="sm" /> : "Save Bank Details"}
                   </Button>
                 </div>
 
@@ -416,7 +484,8 @@ export default function ProfilePage() {
 
                 <div className="mt-6 p-4 bg-blue-50 rounded-lg">
                   <p className="text-sm text-blue-700">
-                    ⚠️ Your bank details are used for withdrawals from your wallet. Please ensure they are accurate.
+                    ⚠️ Your bank details are used for withdrawals from your
+                    wallet. Please ensure they are accurate.
                   </p>
                 </div>
               </Card>
@@ -424,22 +493,29 @@ export default function ProfilePage() {
           )}
 
           {/* Preferences Tab */}
-          {activeTab === 'preferences' && (
+          {activeTab === "preferences" && (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3 }}
             >
               <Card>
-                <h2 className="text-xl font-semibold text-[var(--color-brand-text)] mb-6">Notification Preferences</h2>
+                <h2 className="text-xl font-semibold text-[var(--color-brand-text)] mb-6">
+                  Notification Preferences
+                </h2>
 
                 <div className="space-y-4">
                   <label className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 cursor-pointer">
                     <div className="flex items-center gap-3">
-                      <Mail size={20} className="text-[var(--color-brand-primary)]" />
+                      <Mail
+                        size={20}
+                        className="text-[var(--color-brand-primary)]"
+                      />
                       <div>
                         <p className="font-medium">Email Notifications</p>
-                        <p className="text-sm text-gray-500">Receive updates about orders, savings, and properties</p>
+                        <p className="text-sm text-gray-500">
+                          Receive updates about orders, savings, and properties
+                        </p>
                       </div>
                     </div>
                     <input
@@ -453,10 +529,15 @@ export default function ProfilePage() {
 
                   <label className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 cursor-pointer">
                     <div className="flex items-center gap-3">
-                      <Phone size={20} className="text-[var(--color-brand-primary)]" />
+                      <Phone
+                        size={20}
+                        className="text-[var(--color-brand-primary)]"
+                      />
                       <div>
                         <p className="font-medium">SMS Notifications</p>
-                        <p className="text-sm text-gray-500">Get important alerts via SMS</p>
+                        <p className="text-sm text-gray-500">
+                          Get important alerts via SMS
+                        </p>
                       </div>
                     </div>
                     <input
@@ -473,14 +554,16 @@ export default function ProfilePage() {
           )}
 
           {/* Security Tab */}
-          {activeTab === 'security' && (
+          {activeTab === "security" && (
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3 }}
             >
               <Card>
-                <h2 className="text-xl font-semibold text-[var(--color-brand-text)] mb-6">Change Password</h2>
+                <h2 className="text-xl font-semibold text-[var(--color-brand-text)] mb-6">
+                  Change Password
+                </h2>
 
                 <div className="space-y-5">
                   <Input
@@ -510,14 +593,19 @@ export default function ProfilePage() {
                 </div>
 
                 <div className="mt-6">
-                  <Button onClick={updatePassword} disabled={isLoading} className="w-full md:w-auto">
-                    {isLoading ? <Spinner size="sm" /> : 'Update Password'}
+                  <Button
+                    onClick={updatePassword}
+                    disabled={isLoading}
+                    className="w-full md:w-auto"
+                  >
+                    {isLoading ? <Spinner size="sm" /> : "Update Password"}
                   </Button>
                 </div>
 
                 <div className="mt-6 p-4 bg-yellow-50 rounded-lg">
                   <p className="text-sm text-yellow-700">
-                    🔒 Password requirements: Minimum 8 characters, containing uppercase, lowercase, and numbers.
+                    🔒 Password requirements: Minimum 8 characters, containing
+                    uppercase, lowercase, and numbers.
                   </p>
                 </div>
               </Card>

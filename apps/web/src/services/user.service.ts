@@ -32,4 +32,9 @@ export class UserService {
     const response = await api.patch("/users/role", { role });
     return response.data;
   }
+
+  static async updateUserRole(userId: string, role: string) {
+    const response = await api.patch(`/admin/users/${userId}/role`, { role });
+    return response.data;
+  }
 }

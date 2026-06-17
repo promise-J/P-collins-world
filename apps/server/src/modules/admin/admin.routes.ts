@@ -6,10 +6,14 @@ import { asyncHandler } from "@/utils/asyncHandler";
 import { authenticate } from "@/modules/middleware/auth.middleware";
 import { authorize } from "@/modules/middleware/role.middleware";
 import { UserRole } from "@/enum/role.enum";
+import { validate } from "../middleware/validate.middleware";
+import { loginSchema } from "./admin.validation";
 
 const router = Router();
 
 const controller = new AdminController();
+
+router.post("/login", validate(loginSchema), asyncHandler(controller.login));
 
 router.get(
     "/dashboard",
@@ -50,6 +54,13 @@ router.get(
     authenticate,
     authorize(UserRole.ADMIN, UserRole.SUPER_ADMIN),
     asyncHandler(controller.totalSavings)
+  );
+
+  router.patch(
+    "/users/:userId/role",
+    authenticate,
+    authorize(UserRole.ADMIN, UserRole.SUPER_ADMIN),
+    asyncHandler(controller.updateUserRole)
   );
 
 export default router

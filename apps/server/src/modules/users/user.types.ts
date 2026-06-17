@@ -22,6 +22,7 @@ export interface IUser extends Document {
   suspensionReason?: string;
   verifiedAgent: boolean;
   verifiedLandlord: boolean;
+  businessType: string;
   createdAt: Date;
   updatedAt: Date;
 }

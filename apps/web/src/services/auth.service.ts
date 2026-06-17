@@ -20,7 +20,7 @@ export class AuthService {
     return response.data;
   }
 
-  static async login(payload: { email: string; password: string }): Promise<ApiResponse<User>> {
+  static async login(payload: { email: string; password: string, role: string }): Promise<ApiResponse<User>> {
     const response = await api.post("/auth/login", payload);
     return response.data;
   }
