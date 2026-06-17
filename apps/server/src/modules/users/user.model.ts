@@ -81,6 +81,13 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    businessName: {
+      type: String,
+    },
+    settingsId: {
+    type: mongoose.Types.ObjectId,
+    ref: "UserSettings",
+  },
     ...baseSchemaFields,
   },
   baseSchemaOptions

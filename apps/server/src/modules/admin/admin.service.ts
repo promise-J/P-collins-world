@@ -12,10 +12,78 @@ import { TransactionModel, TransactionStatus } from "../wallet/transaction.model
 import { AuditService } from "../audit/audit.service";
 import { emailQueue } from "../jobs/queues/email.queue";
 import { getRedis } from "../../config/redis";
+import { serviceResponse } from "@/utils/apiResponse";
+import { AuthRepository } from "../auth/auth.repository";
+import { UserRole } from "@/enum/role.enum";
+import bcrypt from "bcryptjs";
+import { JwtService } from "../services/jwt.service";
 
 const auditService = new AuditService();
 
 export class AdminService {
+    private authRepository = new AuthRepository();
+
+
+  async login(email: string, password: string) {
+      if (!password) {
+        return serviceResponse(false, "Invalid credentials");
+      }
+  
+      const user = await this.authRepository.findByEmail(email);
+  
+      if (!user) {
+        return serviceResponse(false, "Admin not found");
+      }
+  
+      if (user?.role !== UserRole.ADMIN &&  user?.role !== UserRole.SUPER_ADMIN) {
+        return serviceResponse(false, "Access denied. Administrative privileges required.");
+      }
+  
+      if (!user.isVerified) {
+        return serviceResponse(
+          false,
+          "Please verify your email before logging in"
+        );
+      }
+  
+      if (user.isSuspended) {
+        return serviceResponse(
+          false,
+          `Account suspended. Reason: ${
+            user.suspensionReason || "Violation of terms"
+          }`
+        );
+      }
+  
+      const valid = await bcrypt.compare(password, user.password);
+  
+      if (!valid) {
+        return serviceResponse(false, "Invalid credentials");
+      }
+  
+      const accessToken = JwtService.signAccessToken(user._id.toString());
+      const refreshToken = JwtService.signRefreshToken(user._id.toString());
+  
+      await this.authRepository.updateRefreshToken(user._id.toString(), refreshToken);
+  
+      const userObj = user.toObject();
+  
+      const {
+        password: _,
+        refreshToken: __,
+        verificationToken,
+        verificationExpires,
+        passwordResetToken,
+        passwordResetExpires,
+        ...userData
+      } = userObj as any;
+  
+      return serviceResponse(true, "Login successful", {
+        user: userData,
+        accessToken,
+        refreshToken,
+      });
+    }
 
   async getSystemMetrics(req: Request, res: Response){
   try {

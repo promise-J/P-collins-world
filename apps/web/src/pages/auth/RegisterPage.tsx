@@ -1,14 +1,14 @@
 import { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { useAuthStore } from "@/store/auth.store";
-import { Button } from "@/ui/components/Button";
 import { Input } from "@/ui/components/Input";
-import { Eye, EyeOff, Mail, Lock, User, Phone } from "lucide-react";
+import { Eye, EyeOff, User, Building2, Home, Store } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import toast from "react-hot-toast";
 import { GoogleSignInButton } from "@/components/auth/GoogleSignInButton";
+import { UserRole } from "@/enum/role.enum";
+import toast from "react-hot-toast";
 
 const registerSchema = z
   .object({
@@ -16,8 +16,12 @@ const registerSchema = z
     lastName: z.string().min(2, "Last name must be at least 2 characters"),
     email: z.string().email("Please enter a valid email address"),
     phone: z.string().optional(),
-    password: z.string().min(8, "Password must be at least 8 characters"),
+    password: z.string().min(4, "Password must be at least 8 characters")
+      .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
+      .regex(/[a-z]/, "Password must contain at least one lowercase letter")
+      .regex(/[0-9]/, "Password must contain at least one number"),
     confirmPassword: z.string(),
+    businessName: z.string().optional(),
   })
   .refine((data) => data.password === data.confirmPassword, {
     message: "Passwords don't match",
@@ -26,15 +30,41 @@ const registerSchema = z
 
 type RegisterFormData = z.infer<typeof registerSchema>;
 
+interface RegisterDataWithRole {
+  firstName: string;
+  lastName: string;
+  email: string;
+  password: string;
+  phone?: string;
+  businessName?: string;
+  role: UserRole;
+}
+
+const roleIcons: Record<string, any> = {
+  USER: User,
+  AGENT: Building2,
+  LANDLORD: Home,
+  VENDOR: Store,
+};
+
+const roleLabels: Record<string, string> = {
+  USER: "Regular User",
+  AGENT: "Real Estate Agent",
+  LANDLORD: "Landlord",
+  VENDOR: "Vendor",
+};
+
+const requiresBusinessName = (role: string): boolean => {
+  return ["AGENT", "LANDLORD", "VENDOR"].includes(role);
+};
+
 export default function RegisterPage() {
   const navigate = useNavigate();
-  const {
-    register: registerUser,
-    isLoading,
-    error,
-    clearError,
-    isAuthenticated,
-  } = useAuthStore();
+  const [searchParams] = useSearchParams();
+  const selectedRole = (searchParams.get("role") || "USER") as UserRole;
+  
+  const { register: registerUser, isLoading, error, clearError, isAuthenticated } =
+    useAuthStore();
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
@@ -51,6 +81,7 @@ export default function RegisterPage() {
       phone: "",
       password: "",
       confirmPassword: "",
+      businessName: "",
     },
   });
 
@@ -60,30 +91,56 @@ export default function RegisterPage() {
     }
   }, [isAuthenticated, navigate]);
 
+  // If no role is selected, redirect to role selection
+  useEffect(() => {
+    if (!searchParams.get("role")) {
+      navigate("/role-selection?mode=register", { replace: true });
+    }
+  }, [searchParams, navigate]);
+
   const onSubmit = async (data: RegisterFormData) => {
     clearError();
+    
+    // Exclude confirmPassword (it's only for validation)
     const { confirmPassword, ...registerData } = data;
-    const result = await registerUser(registerData);
-    console.log({ result });
+    
+    // Create the registration data with role
+    const registrationData: RegisterDataWithRole = {
+      ...registerData,
+      role: selectedRole,
+    };
+    
+    const result = await registerUser(registrationData);
 
     if (result.success) {
-      window.location.href = `/check-email?email=${encodeURIComponent(
-        data.email
-      )}`;
+      toast.success(result.message || "Account created successfully! Please check your email.");
+      window.location.href = `/check-email?email=${encodeURIComponent(data.email)}`;
     } else {
-      // toast.error(result.message || 'Registration failed. Please try again.');
+      toast.error(result.message || "Registration failed. Please try again.");
     }
   };
+
+  const RoleIcon = roleIcons[selectedRole] || User;
 
   return (
     <div className="min-h-screen flex items-center justify-center py-12 px-4 bg-gray-50">
       <div className="max-w-md w-full bg-white rounded-2xl shadow-xl p-8">
         <div className="text-center mb-8">
           <h1 className="text-2xl font-bold text-gray-900">
-            Create an Account
+            Create Account
           </h1>
-          <p className="text-gray-600 mt-2">Join P Collins today</p>
+          <p className="text-gray-600 mt-1 flex items-center justify-center gap-2">
+            <RoleIcon size={18} className="text-[var(--color-brand-primary)]" />
+            {roleLabels[selectedRole] || "User"}
+          </p>
+          <Link
+            to="/role-selection?mode=register"
+            className="text-xs text-[var(--color-brand-primary)] hover:underline"
+          >
+            Change role
+          </Link>
         </div>
+
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
           <div className="grid grid-cols-2 gap-4">
             <Input
@@ -115,6 +172,15 @@ export default function RegisterPage() {
             {...register("phone")}
             error={errors.phone?.message}
           />
+
+          {requiresBusinessName(selectedRole) && (
+            <Input
+              label="Business / Company Name"
+              placeholder="e.g., ABC Realty Ltd"
+              {...register("businessName")}
+              error={errors.businessName?.message}
+            />
+          )}
 
           <div className="relative">
             <Input
@@ -160,7 +226,7 @@ export default function RegisterPage() {
 
           <p className="text-center text-sm text-gray-600">
             Already have an account?{" "}
-            <Link to="/login" className="text-[#8B3A3A] hover:underline">
+            <Link to={`/login?role=${selectedRole}`} className="text-[#8B3A3A] hover:underline">
               Sign in
             </Link>
           </p>
@@ -171,6 +237,7 @@ export default function RegisterPage() {
             </div>
           )}
         </form>
+
         <div className="relative my-6">
           <div className="absolute inset-0 flex items-center">
             <div className="w-full border-t border-gray-300"></div>
@@ -181,7 +248,12 @@ export default function RegisterPage() {
             </span>
           </div>
         </div>
-        <GoogleSignInButton />
+
+        <GoogleSignInButton 
+          variant="outline" 
+          className="w-full"
+          preselectedRole={selectedRole}
+        />
       </div>
     </div>
   );

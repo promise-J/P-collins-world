@@ -1,7 +1,36 @@
 import { NavLink } from "react-router-dom";
+import { 
+  Home, 
+  Building2, 
+  Wallet, 
+  ShoppingBag, 
+  Bell, 
+  User, 
+  Settings,
+  Shield,
+  Store,
+  Package,
+  BarChart3,
+  Users,
+  FileText,
+  Plus,
+  CreditCard,
+  Star,
+  MessageSquare,
+  Calendar,
+  Briefcase,
+  LogOut,
+  Heart
+} from "lucide-react";
+
+interface SidebarItem {
+  label: string;
+  path: string;
+  icon: React.ComponentType<{ size?: number; className?: string }>;
+}
 
 interface SidebarProps {
-  items: any[];
+  items: SidebarItem[];
 }
 
 export function Sidebar({ items }: SidebarProps) {
@@ -13,7 +42,11 @@ export function Sidebar({ items }: SidebarProps) {
       <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
         {items.map((item) => {
           const Icon = item.icon;
-
+          if (!Icon) {
+            console.warn(`Icon missing for ${item.label}`);
+            return null;
+          }
+          
           return (
             <NavLink
               key={item.path}
@@ -26,7 +59,7 @@ export function Sidebar({ items }: SidebarProps) {
                  }`
               }
             >
-              {Icon && <Icon size={20} />}
+              <Icon size={20} />
               <span>{item.label}</span>
             </NavLink>
           );

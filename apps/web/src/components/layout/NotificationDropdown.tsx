@@ -1,6 +1,7 @@
 import { Bell } from "lucide-react";
 import { notificationStore } from "../../store/notification.store";
 import { useState } from "react";
+import { Link } from "react-router-dom";
 
 export function NotificationDropdown() {
   const { unreadCount, notifications } = notificationStore();
@@ -8,7 +9,15 @@ export function NotificationDropdown() {
 
   return (
     <div className="relative">
-      <button
+      <Link to='/notifications'>
+        <Bell size={20} className="text-gray-600" />
+        {unreadCount > 0 && (
+          <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-[var(--color-brand-primary)] text-xs text-white">
+            {unreadCount > 9 ? "9+" : unreadCount}
+          </span>
+        )}
+      </Link>
+      {/* <button
         onClick={() => setIsOpen(!isOpen)}
         className="relative p-2 rounded-lg hover:bg-gray-100 transition-colors"
       >
@@ -18,7 +27,7 @@ export function NotificationDropdown() {
             {unreadCount > 9 ? "9+" : unreadCount}
           </span>
         )}
-      </button>
+      </button> */}
 
       {isOpen && (
         <div className="absolute right-0 mt-2 w-80 rounded-lg border border-gray-100 bg-white shadow-lg z-50">

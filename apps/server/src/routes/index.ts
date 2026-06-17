@@ -18,6 +18,7 @@ import notificationRoutes from "../modules/notifications/notification.routes";
 import analyticsRoutes from "../modules/analytics/analytics.routes";
 import auditRoutes from "../modules/audit/audit.routes";
 import uploadRoutes from "../modules/uploads/upload.routes";
+import settingsRoutes from "../modules/users/user-settings/user-settings.routes";
 
 const router = Router();
 
@@ -40,5 +41,6 @@ router.use("/notifications", notificationRoutes);
 router.use("/analytics", analyticsRoutes);
 router.use("/audit", auditRoutes);
 router.use("/upload", uploadRoutes);
+router.use("/settings", settingsRoutes);
 
 export default router;

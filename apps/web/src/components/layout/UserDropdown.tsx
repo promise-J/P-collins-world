@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router-dom";
 import { LogOut, User, Settings, ChevronDown } from "lucide-react";
 import { useAuthStore } from "../../store/auth.store";
+import { Avatar } from "@/ui";
 
 interface UserDropdownProps {
   userName?: string;
@@ -18,11 +19,7 @@ export function UserDropdown({ userName, avatar }: UserDropdownProps) {
         onClick={() => setIsOpen(!isOpen)}
         className="flex items-center gap-2 p-1 rounded-lg hover:bg-gray-100 transition-colors"
       >
-        <img
-          src={avatar || "/avatar.png"}
-          className="h-8 w-8 rounded-full object-cover"
-          alt={userName}
-        />
+        <Avatar src={avatar} name={userName} />
         <span className="hidden md:block text-sm font-medium text-gray-700">
           {userName}
         </span>

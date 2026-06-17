@@ -1,5 +1,5 @@
-import { useEffect } from "react"; // 1. Added useEffect for body scroll locks
-import { X } from "lucide-react";
+import React, { useEffect } from "react"; // 1. Added useEffect for body scroll locks
+import { LucideIcon, X } from "lucide-react";
 import { Link, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -7,7 +7,8 @@ interface SidebarItem {
   path: string;
   label: string;
   // Type the icon as a component constructor function cleanly
-  icon?: React.ComponentType<{ size?: number; className?: string }>;
+  icon?: any;
+  // icon?: React.ComponentType<{ size?: number; className?: string }>;
 }
 
 interface MobileSidebarProps {

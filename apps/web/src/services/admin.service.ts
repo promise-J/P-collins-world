@@ -1,5 +1,6 @@
 import { api } from "@/lib/axios";
 
+
 export class AdminService {
   static async getDashboardMetrics() {
     const response = await api.get("/admin/dashboard");
@@ -48,6 +49,48 @@ export class AdminService {
 
   static async verifyLandlord(userId: string) {
     const response = await api.post(`/admin/users/${userId}/verify-landlord`);
+    return response.data;
+  }
+
+  // Add KYC review method
+  static async reviewKyc(kycId: string, status: string, reason?: string) {
+    const response = await api.patch(`/kyc/${kycId}/review`, { status, reason });
+    return response.data;
+  }
+
+  // Get single KYC details
+  static async getKycDetails(kycId: string) {
+    const response = await api.get(`/kyc/${kycId}`);
+    return response.data;
+  }
+
+  // Get all KYC submissions (with filters)
+  static async getAllKyc(params?: { page?: number; limit?: number; status?: string }) {
+    const response = await api.get("/admin/kyc", { params });
+    return response.data;
+  }
+
+  // Update user role
+  static async updateUserRole(userId: string, role: string) {
+    const response = await api.patch(`/admin/users/${userId}/role`, { role });
+    return response.data;
+  }
+
+  // Get platform statistics
+  static async getPlatformStats() {
+    const response = await api.get("/admin/stats");
+    return response.data;
+  }
+
+  // Get system health
+  static async getSystemHealth() {
+    const response = await api.get("/admin/health");
+    return response.data;
+  }
+
+  // Get audit logs
+  static async getAuditLogs(params?: { page?: number; limit?: number; module?: string }) {
+    const response = await api.get("/admin/audit-logs", { params });
     return response.data;
   }
 }

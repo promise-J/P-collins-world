@@ -137,18 +137,18 @@ export function PublicHeader() {
                 
                 <div className="pt-4 border-t border-gray-100 space-y-2">
                   {!isAuthenticated ? (
-                    <>
-                      <Link to="/login" onClick={() => setIsMobileMenuOpen(false)}>
-                        <Button variant="ghost" className="w-full">
-                          Sign In
-                        </Button>
-                      </Link>
-                      <Link to="/register" onClick={() => setIsMobileMenuOpen(false)}>
-                        <Button variant="primary" className="w-full">
-                          Get Started
-                        </Button>
-                      </Link>
-                    </>
+                     <>
+                     <Link to="/role-selection?mode=login">
+                       <Button variant="ghost" size="sm">
+                         Sign In
+                       </Button>
+                     </Link>
+                     <Link to="/role-selection?mode=register">
+                       <Button variant="primary" size="sm">
+                         Get Started
+                       </Button>
+                     </Link>
+                   </>
                   ) : (
                     <Link to="/dashboard" onClick={() => setIsMobileMenuOpen(false)}>
                       <Button variant="primary" className="w-full">

@@ -31,7 +31,7 @@ export function RegisterForm() {
       // Pro-tip: You can use your useAuthStore here to log the user in immediately!
     },
     onError: (error) => {
-      console.error("Registration failed:", error);
+      console.error("Registration failedee:", error);
     }
   });
 

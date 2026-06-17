@@ -2,18 +2,14 @@ import { api } from "@/lib/axios";
 
 
 export class KYCService {
-  static async submitKyc(payload: {
-    fullName: string;
-    idType: string;
-    idNumber: string;
-    idDocumentUrl: string;
-    selfieUrl: string;
-    documents?: Array<{ type: string; url: string; publicId: string }>;
-  }) {
-    const response = await api.post("/kyc/submit", payload);
+  static async submitKyc(payload: FormData) {
+    const response = await api.post("/kyc/submit", payload, {
+      headers: {
+        "Content-Type": "multipart/form-data", 
+      },
+    });
     return response.data;
   }
-
   static async getMyKyc() {
     const response = await api.get("/kyc/me");
     return response.data;
