@@ -4,6 +4,7 @@ import {
   baseSchemaOptions,
 } from "../shared/database/base.schema";
 import { UserRole } from "../../enum/role.enum";
+import { autoConvertObjectIdsAsync } from "@/utils/mongoose-plugins";
 
 const userSchema = new mongoose.Schema(
   {
@@ -92,5 +93,8 @@ const userSchema = new mongoose.Schema(
   },
   baseSchemaOptions
 );
+
+userSchema.plugin(autoConvertObjectIdsAsync(['settingsId']))
+
 
 export const UserModel = mongoose.model("User", userSchema);

@@ -18,21 +18,21 @@ router.post("/login", validate(loginSchema), asyncHandler(controller.login));
 router.get(
     "/dashboard",
     authenticate,
-    authorize(UserRole.ADMIN, UserRole.SUPER_ADMIN),
+    authorize([UserRole.ADMIN, UserRole.SUPER_ADMIN]),
     asyncHandler(controller.dashboardMetrics)
   );
   
   router.get(
     "/users",
     authenticate,
-    authorize(UserRole.ADMIN, UserRole.SUPER_ADMIN),
+    authorize([UserRole.ADMIN, UserRole.SUPER_ADMIN]),
     asyncHandler(controller.getUsers)
   );
   
   router.get(
     "/analytics/revenue",
     authenticate,
-    authorize(UserRole.ADMIN, UserRole.SUPER_ADMIN),
+    authorize([UserRole.ADMIN, UserRole.SUPER_ADMIN]),
     asyncHandler(controller.monthlyRevenue)
   );
 
@@ -40,26 +40,26 @@ router.get(
   router.get(
     "/analytics/pending-kyc",
     authenticate,
-    authorize(UserRole.ADMIN, UserRole.SUPER_ADMIN),
+    authorize([UserRole.ADMIN, UserRole.SUPER_ADMIN]),
     asyncHandler(controller.pendingKyc)
   );
   router.get(
     "/analytics/top-products",
     authenticate,
-    authorize(UserRole.ADMIN, UserRole.SUPER_ADMIN),
+    authorize([UserRole.ADMIN, UserRole.SUPER_ADMIN]),
     asyncHandler(controller.topProducts)
   );
   router.get(
     "/analytics/total-savings",
     authenticate,
-    authorize(UserRole.ADMIN, UserRole.SUPER_ADMIN),
+    authorize([UserRole.ADMIN, UserRole.SUPER_ADMIN]),
     asyncHandler(controller.totalSavings)
   );
 
   router.patch(
     "/users/:userId/role",
     authenticate,
-    authorize(UserRole.ADMIN, UserRole.SUPER_ADMIN),
+    authorize([UserRole.ADMIN, UserRole.SUPER_ADMIN]),
     asyncHandler(controller.updateUserRole)
   );
 

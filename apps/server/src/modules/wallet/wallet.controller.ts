@@ -6,37 +6,37 @@ export class WalletController {
   private service = new WalletService();
 
   getWallet = async (req: any, res: Response) => {
-    const wallet = await this.service.getWallet(req.user.userId);
-    return apiResponse(res, true, "Wallet fetched", wallet);
+    const result = await this.service.getWallet(req.user._id);
+    return apiResponse(res, result.success, result.message, result.data);
   };
 
   fundWallet = async (req: any, res: Response) => {
     const result = await this.service.initializeFunding(
-      req.user.userId,
+      req.user._id,
       req.user.email,
       req.body.amount
     );
-    return apiResponse(res, true, "Funding initialized", result);
+    return apiResponse(res, result.success, result.message, result.data);
   };
 
   verifyFunding = async (req: any, res: Response) => {
     const result = await this.service.verifyFunding(req.query.reference as string);
-    return apiResponse(res, true, "Funding verified", result);
+    return apiResponse(res, result.success, result.message, result.data);
   };
 
   withdraw = async (req: any, res: Response) => {
     const result = await this.service.withdraw(
-      req.user.userId,
+      req.user._id,
       req.body.amount,
       req.body.bankDetails
     );
-    return apiResponse(res, true, "Withdrawal initiated", result);
+    return apiResponse(res, result.success, result.message, result.data);
   };
 
   getTransactions = async (req: any, res: Response) => {
     const page = req.query.page ? parseInt(req.query.page as string) : 1;
     const limit = req.query.limit ? parseInt(req.query.limit as string) : 20;
-    const transactions = await this.service.getTransactions(req.user.userId, page, limit);
-    return apiResponse(res, true, "Transactions fetched", transactions);
+    const result = await this.service.getTransactions(req.user._id, page, limit);
+    return apiResponse(res, result.success, result.message, result.data);
   };
 }

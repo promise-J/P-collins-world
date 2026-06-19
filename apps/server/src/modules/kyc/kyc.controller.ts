@@ -8,7 +8,7 @@ export class KYCController {
 
   submit = async (req: any, res: Response) => {
     const kyc = await this.service.submitKyc(
-      req.user.userId,
+      req.user._id,
       req.body
     );
 
@@ -19,7 +19,7 @@ export class KYCController {
     const kyc = await this.service.reviewKyc(
       req.params.id,
       req.body.status,
-      req.user.userId,
+      req.user._id,
       req.body.reason
     );
 

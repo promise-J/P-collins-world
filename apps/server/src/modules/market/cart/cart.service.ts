@@ -1,3 +1,4 @@
+import { serviceResponse } from "@/utils/apiResponse";
 import { CartModel } from "./cart.model";
 
 export class CartService {
@@ -21,7 +22,7 @@ export class CartService {
     );
 
     if (existing) {
-       existing.quantity ??= 0; // Sets to 0 if null/undefined
+       existing.quantity ??= 0;
        existing.quantity += quantity;
     } else {
       cart.items.push({
@@ -33,14 +34,16 @@ export class CartService {
 
     await cart.save();
 
-    return cart;
+    return serviceResponse(true, 'Item added to cart', cart);
   }
 
   async getCart(userId: string) {
-    return CartModel.findOne({ userId });
+    const cartItems = await CartModel.findOne({ userId });
+    return serviceResponse(true, 'Cart fetchec', cartItems)
   }
 
   async clearCart(userId: string) {
-    return CartModel.findOneAndDelete({ userId });
+    await CartModel.findOneAndDelete({ userId });
+    return serviceResponse(true, 'Cart cleared')
   }
 }

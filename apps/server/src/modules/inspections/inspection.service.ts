@@ -1,13 +1,14 @@
 import { InspectionModel } from "./inspection.model";
 import { PropertyModel } from "../properties/property.model";
 import { NotificationService } from "../notifications/notification.service";
+import { serviceResponse } from "@/utils/apiResponse";
 
 export class InspectionService {
   private notificationService = new NotificationService();
 
   async bookInspection(userId: string, propertyId: string, scheduledDate: Date, message?: string) {
     const property = await PropertyModel.findById(propertyId);
-    if (!property) throw new Error("Property not found");
+    if (!property) return serviceResponse(false, "Property not found");
 
     const existing = await InspectionModel.findOne({
       userId,
@@ -15,7 +16,7 @@ export class InspectionService {
       status: { $in: ["PENDING", "CONFIRMED"] }
     });
 
-    if (existing) throw new Error("You already have a pending inspection for this property");
+    if (existing) return serviceResponse(false, "You already have a pending inspection for this property");
 
     const inspection = new InspectionModel({
       userId,
@@ -38,15 +39,19 @@ export class InspectionService {
     }
 
     await inspection.populate("propertyId userId");
-    return inspection;
+    return serviceResponse(true, 'Inspection booked', inspection);
   }
 
   async updateStatus(inspectionId: string, status: string, adminNotes?: string) {
     const inspection = await InspectionModel.findById(inspectionId);
-    if (!inspection) throw new Error("Inspection not found");
+    if (!inspection) return serviceResponse(false, "Inspection not found");
 
     inspection.status = status as any;
-    if (adminNotes) inspection.adminNotes = adminNotes;
+    if (adminNotes){
+      if(inspection){
+        inspection.adminNotes = adminNotes;
+      }
+    } 
     await inspection.save();
 
     // Notify user
@@ -58,7 +63,7 @@ export class InspectionService {
       }
     );
 
-    return inspection;
+    return serviceResponse(true, 'Inspection updated', inspection);
   }
 
   async getUserInspections(userId: string, page: number = 1, limit: number = 10) {
@@ -70,12 +75,12 @@ export class InspectionService {
 
     const total = await InspectionModel.countDocuments({ userId });
 
-    return {
+    return serviceResponse(true, 'User inspection fetched', {
       data: inspections,
       total,
       page,
       totalPages: Math.ceil(total / limit)
-    };
+    });
   }
 
   async getPropertyInspections(propertyId: string, page: number = 1, limit: number = 10) {
@@ -87,25 +92,25 @@ export class InspectionService {
 
     const total = await InspectionModel.countDocuments({ propertyId });
 
-    return {
+    return serviceResponse(true, 'Property inspection', {
       data: inspections,
       total,
       page,
       totalPages: Math.ceil(total / limit)
-    };
+    });
   }
 
   async cancelInspection(inspectionId: string, userId: string) {
     const inspection = await InspectionModel.findOne({ _id: inspectionId, userId });
-    if (!inspection) throw new Error("Inspection not found");
+    if (!inspection) return serviceResponse(false, "Inspection not found");
 
     if (inspection.status !== "PENDING") {
-      throw new Error("Cannot cancel inspection that is already confirmed or done");
+      return serviceResponse(false, "Cannot cancel inspection that is already confirmed or done");
     }
 
     inspection.status = "CANCELLED";
     await inspection.save();
 
-    return inspection;
+    return serviceResponse(true, 'Inspection cancelled', inspection);
   }
 }

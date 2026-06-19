@@ -1,3 +1,4 @@
+import { autoConvertObjectIdsAsync } from "@/utils/mongoose-plugins";
 import mongoose from "mongoose";
 
 const reviewSchema = new mongoose.Schema(
@@ -9,6 +10,9 @@ const reviewSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+reviewSchema.plugin(autoConvertObjectIdsAsync(['userId', 'productId']))
+
 
 export const ReviewModel = mongoose.model(
   "Review",

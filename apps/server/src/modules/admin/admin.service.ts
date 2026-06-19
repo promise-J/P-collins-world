@@ -143,7 +143,7 @@ export class AdminService {
       failedJobs: failedJobsCount,
     };
 
-    return metricsPayload;
+    return serviceResponse(true, "Metrics fetched", metricsPayload)
   } catch (error: any) {
     console.error("Error fetching system metrics:", error);
   }
@@ -164,13 +164,15 @@ export class AdminService {
       SavingsPlanModel.countDocuments()
     ]);
 
-    return {
-      users,
-      properties,
-      products,
-      orders,
-      savingsPlans
-    };
+    return serviceResponse(true, "Dashboad metrics", 
+      {
+        users,
+        properties,
+        products,
+        orders,
+        savingsPlans
+      }
+    )
   }
   async getUsers(query: any) {
     const {
@@ -203,17 +205,23 @@ export class AdminService {
       ];
     }
   
-    return UserModel.find(filter)
+    const users = UserModel.find(filter)
       .skip((page - 1) * limit)
       .limit(limit);
+
+    return serviceResponse(true, "User fetched", users)
+
   }
   async pendingKyc() {
-    return KYCModel.find({
+    const kycs = await KYCModel.find({
       status: KYCStatus.PENDING
     });
+
+    return serviceResponse(true, "Kyc fetched", kycs)
+
   }
   async monthlyRevenue() {
-    return TransactionModel.aggregate([
+    const result = TransactionModel.aggregate([
       {
         $match: {
           status: TransactionStatus.SUCCESS
@@ -234,35 +242,21 @@ export class AdminService {
         }
       }
     ]);
+
+    return serviceResponse(true, "Monthly revenue fetched", result)
+
   }
   async topProducts() {
-    return ProductModel.find()
+    const topProducts = await ProductModel.find()
       .sort({
         salesCount: -1
       })
       .limit(10);
+
+    return serviceResponse(true, "Product fetched", topProducts)
   }
-//   async topVendors() {
-//     return ProductModel.aggregate([
-//       {
-//         $group: {
-//           _id: "$vendorId",
-  
-//           totalSales: {
-//             $sum: "$salesCount"
-//           }
-//         }
-//       },
-  
-//       {
-//         $sort: {
-//           totalSales: -1
-//         }
-//       }
-//     ]);
-//   }
   async totalSavings() {
-    return  SavingsPlanModel.aggregate([
+    const totalSavings = await SavingsPlanModel.aggregate([
         {
           $group:{
              _id:{
@@ -276,21 +270,10 @@ export class AdminService {
           }
         }
        ]);
-
-    // SavingsPlanModel.aggregate([
-    //   {
-    //     $group: {
-    //       _id: null,
-  
-    //       total: {
-    //         $sum: "$currentAmount"
-    //       }
-    //     }
-    //   }
-    // ]);
+    return serviceResponse(true, "Total savings fetched", totalSavings)
   }
   async orderTrend() {
-    return OrderModel.aggregate([
+    const orderTrend = await OrderModel.aggregate([
         {
           $group:{
              _id:{
@@ -304,9 +287,11 @@ export class AdminService {
           }
         }
        ]);
+
+    return serviceResponse(true, "Order trend fetched", orderTrend)
   }
   async propertyTrend() {
-    PropertyModel.aggregate([
+    const propertyTrend = await PropertyModel.aggregate([
         {
           $group:{
              _id:{
@@ -320,9 +305,11 @@ export class AdminService {
           }
         }
        ]);
+
+    return serviceResponse(true, "Property trend", propertyTrend)
   }
   async userTrend() {
-    return UserModel.aggregate([
+    const userTrend = await UserModel.aggregate([
         {
           $group:{
              _id:{
@@ -336,6 +323,8 @@ export class AdminService {
           }
         }
        ]);
+
+    return serviceResponse(true, "User Trend", userTrend)
   }
   async suspendUser(
     userId:string,
@@ -357,27 +346,32 @@ export class AdminService {
       action:"USER_SUSPENDED"
     });
   
-    return user;
+    return serviceResponse(true, "User suspended", user);
   }
   async activateUser(userId:string){
-    return UserModel.findByIdAndUpdate(
+    await UserModel.findByIdAndUpdate(
       userId,
       {
         isSuspended:false,
         suspensionReason:null
       }
     );
+
+    return serviceResponse(true, "User activated successfully")
   }
   async verifyAgent(userId:string){
-    return UserModel.findByIdAndUpdate(
+    await UserModel.findByIdAndUpdate(
        userId,
        { verifiedAgent:true }
     );
+
+    return serviceResponse(true, "Agent verified successfully")
  }
  async verifyLandlord(userId:string){
-    return UserModel.findByIdAndUpdate(
+    await UserModel.findByIdAndUpdate(
        userId,
        { verifiedLandlord:true }
     );
+    return serviceResponse(true, "Landlord verified successfully")
  }
 }

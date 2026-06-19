@@ -1,5 +1,6 @@
 import { NotificationModel } from "./notification.model";
 import { notificationQueue } from "../jobs/queues/notification.queue";
+import { serviceResponse } from "@/utils/apiResponse";
 
 interface CreateNotificationInput {
   userId: string;
@@ -28,7 +29,7 @@ export class NotificationService {
       sendEmail: false, // Set to true if you want email notifications
     });
 
-    return notification;
+    return serviceResponse(true, 'Notification created', notification);
   }
 
   async getUserNotifications(userId: string, page: number = 1, limit: number = 20) {
@@ -40,13 +41,13 @@ export class NotificationService {
     const total = await NotificationModel.countDocuments({ userId });
     const unreadCount = await this.getUnreadCount(userId);
 
-    return {
+    return serviceResponse(true, 'User notifications', {
       data: notifications,
       total,
       page,
       totalPages: Math.ceil(total / limit),
       unreadCount
-    };
+    });
   }
 
   async markAsRead(notificationId: string, userId: string) {
@@ -55,8 +56,8 @@ export class NotificationService {
       { isRead: true },
       { new: true }
     );
-    if (!notification) throw new Error("Notification not found");
-    return notification;
+    if (!notification) return serviceResponse(false, "Notification not found");
+    return serviceResponse(true, 'Notificaion marked as read', notification);
   }
 
   async markAllAsRead(userId: string) {
@@ -64,7 +65,7 @@ export class NotificationService {
       { userId, isRead: false },
       { isRead: true }
     );
-    return { modifiedCount: result.modifiedCount };
+    return serviceResponse(true, 'All notifications marked as read', { modifiedCount: result.modifiedCount });
   }
 
   async deleteNotification(notificationId: string, userId: string) {
@@ -72,11 +73,12 @@ export class NotificationService {
       _id: notificationId,
       userId
     });
-    if (!notification) throw new Error("Notification not found");
-    return true;
+    if (!notification) return serviceResponse(false, "Notification not found");
+    return serviceResponse(true, 'Notification deleted', true);
   }
 
   async getUnreadCount(userId: string) {
-    return NotificationModel.countDocuments({ userId, isRead: false });
+    const result = await NotificationModel.countDocuments({ userId, isRead: false });
+    return serviceResponse(true, 'Notification count fetched', result)
   }
 }

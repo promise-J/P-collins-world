@@ -19,6 +19,7 @@ import analyticsRoutes from "../modules/analytics/analytics.routes";
 import auditRoutes from "../modules/audit/audit.routes";
 import uploadRoutes from "../modules/uploads/upload.routes";
 import settingsRoutes from "../modules/users/user-settings/user-settings.routes";
+import wishlistRoutes from "../modules/wishlist/wishlist.routes"
 
 const router = Router();
 
@@ -42,5 +43,6 @@ router.use("/analytics", analyticsRoutes);
 router.use("/audit", auditRoutes);
 router.use("/upload", uploadRoutes);
 router.use("/settings", settingsRoutes);
+router.use("/wishlist", wishlistRoutes);
 
 export default router;

@@ -1,3 +1,4 @@
+import { autoConvertObjectIdsAsync } from "@/utils/mongoose-plugins";
 import mongoose from "mongoose";
 
 const walletSchema = new mongoose.Schema(
@@ -19,5 +20,8 @@ const walletSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+walletSchema.plugin(autoConvertObjectIdsAsync(['userId']))
+
 
 export const WalletModel = mongoose.model("Wallet", walletSchema);

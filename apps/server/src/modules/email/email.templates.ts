@@ -21,7 +21,7 @@ export const verificationEmail = (link: string, name: string) => `
       </p>
       <p>Or copy and paste this link into your browser:</p>
       <p style="background: #f4f4f4; padding: 10px; word-break: break-all;">${link}</p>
-      <p>This link will expire in 24 hours.</p>
+      <p>This link will expire in 15 minutes.</p>
       <p>If you didn't create an account, you can safely ignore this email.</p>
     </div>
     <div style="text-align: center; padding: 20px; color: #666; font-size: 12px;">
@@ -306,7 +306,7 @@ export const welcomeEmail = (name: string, role: string) => {
   `;
 };
 
-export const passwordResetEmail = (link: string) => `
+export const passwordResetEmail = (link: string, name: string) => `
 <!DOCTYPE html>
 <html>
 <head>
@@ -316,6 +316,10 @@ export const passwordResetEmail = (link: string) => `
     .header { background: #8B3A3A; color: white; padding: 20px; text-align: center; }
     .content { padding: 20px; text-align: center; }
     .button { display: inline-block; padding: 10px 20px; background: #8B3A3A; color: white; text-decoration: none; border-radius: 5px; }
+    a {
+      color: #8B3A3A;
+      text-decoration: none;
+    }
   </style>
 </head>
 <body>
@@ -324,12 +328,13 @@ export const passwordResetEmail = (link: string) => `
       <h1>Reset Your Password</h1>
     </div>
     <div class="content">
-      <p>We received a request to reset your password. Click the button below to create a new password:</p>
+      <p>Hello ${name}, We received a request to reset your password. Click the button below to create a new password:</p>
       <a href="${link}" class="button">Reset Password</a>
-      <p>This link will expire in 1 hour.</p>
+      <p>This link will expire in 15 minutes.</p>
       <p>If you didn't request this, you can ignore this email.</p>
     </div>
   </div>
 </body>
 </html>
 `;
+

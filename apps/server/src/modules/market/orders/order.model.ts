@@ -1,3 +1,4 @@
+import { autoConvertObjectIdsAsync } from "@/utils/mongoose-plugins";
 import mongoose from "mongoose";
 
 export enum OrderStatus {
@@ -36,5 +37,8 @@ const orderSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+orderSchema.plugin(autoConvertObjectIdsAsync(['userId', 'items.productId']))
+
 
 export const OrderModel = mongoose.model("Order", orderSchema);

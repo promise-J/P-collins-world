@@ -2,6 +2,7 @@ import { WalletModel } from "./wallet.model";
 import { TransactionModel, TransactionStatus, TransactionType } from "./transaction.model";
 import { PaystackService } from "../payments/paystack.service";
 import { ApiError } from "@/utils/apiError";
+import { serviceResponse } from "@/utils/apiResponse";
 
 export class WalletService {
   private paystack = new PaystackService();
@@ -17,11 +18,11 @@ export class WalletService {
       .sort({ createdAt: -1 })
       .limit(50);
 
-    return { wallet, transactions };
+    return serviceResponse(true, 'Wallet transactions fetched', { wallet, transactions });
   }
 
   async initializeFunding(userId: string, email: string, amount: number) {
-    if (amount < 100) throw new ApiError(400, "Minimum funding amount is ₦100");
+    if (amount < 100) return serviceResponse(false, "Minimum funding amount is ₦100");
 
     const payment = await this.paystack.initializePayment(email, amount);
 
@@ -35,11 +36,11 @@ export class WalletService {
       metadata: { accessCode: payment.data.access_code }
     });
 
-    return {
+    return serviceResponse(true, 'Attempt to fund successful', {
       authorizationUrl: payment.data.authorization_url,
       reference: payment.data.reference,
       transactionId: transaction._id
-    };
+    });
   }
 
   async verifyFunding(reference: string) {
@@ -47,10 +48,10 @@ export class WalletService {
     // For now, manual verification
 
     const transaction = await TransactionModel.findOne({ reference });
-    if (!transaction) throw new ApiError(404, "Transaction not found");
+    if (!transaction) return serviceResponse(false, "Transaction not found");
 
     if (transaction.status === TransactionStatus.SUCCESS) {
-      throw new ApiError(400, "Transaction already verified");
+      return serviceResponse(false, "Transaction already verified");
     }
 
     // Verify with Paystack (you'd implement this)
@@ -65,7 +66,7 @@ export class WalletService {
       await wallet.save();
     }
 
-    return transaction;
+    return serviceResponse(true, 'Funding verified', transaction);
   }
 
   async credit(userId: string, amount: number, reference: string, metadata?: any) {
@@ -85,14 +86,14 @@ export class WalletService {
     wallet.balance += amount;
     await wallet.save();
 
-    return transaction;
+    return serviceResponse(true, 'Credit successful', transaction);
   }
 
   async debit(userId: string, amount: number, reference: string, metadata?: any) {
     const wallet = await this.getOrCreateWallet(userId);
 
     if (wallet.balance < amount) {
-      throw new ApiError(400, "Insufficient balance");
+      return serviceResponse(false, "Insufficient balance");
     }
 
     const transaction = await TransactionModel.create({
@@ -109,14 +110,14 @@ export class WalletService {
     wallet.balance -= amount;
     await wallet.save();
 
-    return transaction;
+    return serviceResponse(true, 'Debit succcessful', transaction);
   }
 
   async withdraw(userId: string, amount: number, bankDetails: any) {
     const wallet = await this.getOrCreateWallet(userId);
 
     if (wallet.balance < amount) {
-      throw new ApiError(400, "Insufficient balance");
+      return serviceResponse(false, "Insufficient balance");
     }
 
     // Create pending withdrawal transaction
@@ -137,7 +138,7 @@ export class WalletService {
 
     // TODO: Initiate actual bank transfer via Paystack Transfer API
 
-    return transaction;
+    return serviceResponse(true, 'Withdrawal successful', transaction);
   }
 
   async getTransactions(userId: string, page: number = 1, limit: number = 20) {
@@ -148,12 +149,12 @@ export class WalletService {
 
     const total = await TransactionModel.countDocuments({ userId });
 
-    return {
+    return serviceResponse(true, 'Transaction fetched', {
       data: transactions,
       total,
       page,
       totalPages: Math.ceil(total / limit)
-    };
+    });
   }
 
   private async getOrCreateWallet(userId: string) {
@@ -163,6 +164,6 @@ export class WalletService {
       wallet = await WalletModel.create({ userId, balance: 0, pendingBalance: 0 });
     }
 
-    return wallet;
+    return serviceResponse(true, 'Wallet fetched', wallet);
   }
 }

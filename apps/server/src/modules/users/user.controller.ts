@@ -16,7 +16,7 @@ export class UserController {
 
   updateRole = async (req: any, res: Response) => {
     const user = await this.service.updateRole(
-      req.user.userId,
+      req.user._id,
       req.body.role
     );
 
@@ -25,7 +25,7 @@ export class UserController {
 
   completeProfile = async (req: any, res: Response) => {
     const profile = await this.service.completeProfile(
-      req.user.userId,
+      req.user._id,
       req.body
     );
 
@@ -33,18 +33,18 @@ export class UserController {
   };
 
   updateProfile = async (req: any, res: Response) => {
-    const result = await this.service.updateProfile(req.user.userId, req.body);
+    const result = await this.service.updateProfile(req.user._id, req.body);
     return apiResponse(res, result.success, result.message, result.data);
   };
   
   updateAvatar = async (req: any, res: Response) => {
-    const result = await this.service.updateAvatar(req.user.userId, req.file);
+    const result = await this.service.updateAvatar(req.user._id, req.file);
     return apiResponse(res, result.success, result.message, result.data);
   };
   
   changePassword = async (req: any, res: Response) => {
     const result = await this.service.changePassword(
-      req.user.userId,
+      req.user._id,
       req.body.currentPassword,
       req.body.newPassword
     );
@@ -52,7 +52,7 @@ export class UserController {
   };
   
   updateBankDetails = async (req: any, res: Response) => {
-    const result = await this.service.updateBankDetails(req.user.userId, req.body);
+    const result = await this.service.updateBankDetails(req.user._id, req.body);
     return apiResponse(res, result.success, result.message, result.data);
   };
 }

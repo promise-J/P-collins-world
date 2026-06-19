@@ -1,44 +1,48 @@
 import { FavoriteModel } from "./favorite.model";
 import { PropertyModel } from "../properties/property.model";
+import { serviceResponse } from "@/utils/apiResponse";
 
 export class FavoriteService {
   async addFavorite(userId: string, propertyId: string) {
     const property = await PropertyModel.findById(propertyId);
-    if (!property) throw new Error("Property not found");
+    if (!property) return serviceResponse(false, "Property not found");
 
     const existing = await FavoriteModel.findOne({ userId, propertyId });
-    if (existing) return existing;
+    if (existing) return serviceResponse(true, 'Property already Added to favorite', existing);
 
-    return FavoriteModel.create({ userId, propertyId });
+    await FavoriteModel.create({ userId, propertyId, itemType: 'property' });
+    return serviceResponse(true, 'Property added to favorite')
   }
 
   async removeFavorite(userId: string, propertyId: string) {
-    return FavoriteModel.findOneAndDelete({ userId, propertyId });
+    await FavoriteModel.findOneAndDelete({ userId, propertyId });
+    return serviceResponse(true, 'Property added to favorite')
   }
 
   async getUserFavorites(userId: string, page: number = 1, limit: number = 10) {
-    const favorites = await FavoriteModel.find({ userId })
+    const favorites = await FavoriteModel.find({ userId, itemType: 'property' })
       .populate("propertyId")
       .skip((page - 1) * limit)
       .limit(limit)
       .sort({ createdAt: -1 });
 
-    const total = await FavoriteModel.countDocuments({ userId });
+    const total = await FavoriteModel.countDocuments({ userId, itemType: 'property' });
 
-    return {
+    return serviceResponse(true, 'Favorite fetched', {
       data: favorites,
       total,
       page,
       totalPages: Math.ceil(total / limit)
-    };
+    });
   }
 
   async isFavorited(userId: string, propertyId: string) {
     const fav = await FavoriteModel.findOne({ userId, propertyId });
-    return !!fav;
+    return serviceResponse(true, 'Favorite check', !!fav);
   }
 
   async getFavoriteCount(propertyId: string) {
-    return FavoriteModel.countDocuments({ propertyId });
+    const count = await FavoriteModel.countDocuments({ propertyId, itemType: 'property' });
+    return serviceResponse(true, 'Favorite fetched', count)
   }
 }

@@ -8,74 +8,95 @@ export class SavingsController {
 
   // PERSONAL PLAN
   createPlan = async (req: any, res: Response) => {
-    const plan = await this.service.createPlan(
-      req.user.userId,
+    const result = await this.service.createPlan(
+      req.user._id,
       req.body
     );
 
-    return apiResponse(res, true, "Savings plan created", plan);
+    return apiResponse(res, result.success, result.message, result.data);
   };
 
   getMyPlans = async (req: Request, res: Response) => {
-    const plans = await this.service.getUserPlans(req?.user?.id ?? "");
+    const result = await this.service.getUserPlans(req?.user?._id.toString() ?? "");
 
-    return apiResponse(res, true, "Plans fetched", plans);
+    return apiResponse(res, result.success, result.message, result.data);
+
   };
 
   contributeToPlan = async (req: any, res: Response) => {
     const result = await this.service.contributeToPlan(
-      req.user.userId,
+      req.user._id,
       req.params.id,
       req.body.amount,
       req.body.reference
     );
 
-    return apiResponse(res, true, "Contribution successful", result);
+    return apiResponse(res, result.success, result.message, result.data);
   };
 
   // GROUP
   createGroup = async (req: any, res: Response) => {
-    const group = await this.service.createGroup(
-      req.user.userId,
-      req.body
-    );
-
-    return apiResponse(res, true, "Group created", group);
+    const result = await this.service.createGroup(req.user._id, req.body);
+    return apiResponse(res, result.success, result.message, result.data);
   };
 
   getMyGroups = async (req: any, res: Response) => {
-    const groups = await this.service.getUserGroups(req.user.userId);
+    const result = await this.service.getUserGroups(req.user._id);
+    return apiResponse(res, result.success, result.message, result.data);
+  };
 
-    return apiResponse(res, true, "Groups fetched", groups);
+  getAllGroups = async (req: any, res: Response) => {
+    const result = await this.service.getAllPublicGroups(req.user._id);
+    return apiResponse(res, result.success, result.message, result.data);
+  };
+
+  getGroupDetails = async (req: any, res: Response) => {
+    const result = await this.service.getGroupDetails(req.params.id, req.user._id);
+    return apiResponse(res, result.success, result.message, result.data);
+  };
+
+  joinGroup = async (req: any, res: Response) => {
+    const result = await this.service.joinGroup(req.params.id, req.user._id);
+    return apiResponse(res, result.success, result.message, result.data);
+  };
+
+  leaveGroup = async (req: any, res: Response) => {
+    const result = await this.service.leaveGroup(req.params.id, req.user._id);
+    return apiResponse(res, result.success, result.message, result.data);
   };
 
   contributeToGroup = async (req: any, res: Response) => {
     const result = await this.service.contributeToGroup(
-      req.user.userId,
+      req.user._id,
       req.params.id,
       req.body.amount,
-      req.body.reference
+      req.body.reference || `GROUP_CONTRIB_${Date.now()}`
     );
+    return apiResponse(res, result.success, result.message, result.data);
+  };
 
-    return apiResponse(res, true, "Group contribution successful", result);
+  breakGroupSavings = async (req: any, res: Response) => {
+    const result = await this.service.breakGroupSavings(req.user._id, req.params.id);
+    return apiResponse(res, result.success, result.message, result.data);
+  };
+
+  deleteGroup = async (req: any, res: Response) => {
+    const result = await this.service.deleteGroup(req.params.id, req.user._id);
+    return apiResponse(res, result.success, result.message, result.data);
+  };
+
+  updateGroup = async (req: any, res: Response) => {
+    const result = await this.service.updateGroup(req.params.id, req.user._id, req.body);
+    return apiResponse(res, result.success, result.message, result.data);
   };
 
   // BREAK SYSTEM
   breakSavingsPlan = async (req: any, res: Response) => {
     const result = await this.service.breakSavingsPlan(
-      req.user.userId,
+      req.user._id,
       req.params.id
     );
 
-    return apiResponse(res, true, "Savings broken", result);
-  };
-
-  breakGroupSavings = async (req: any, res: Response) => {
-    const result = await this.service.breakGroupSavings(
-      req.user.userId,
-      req.params.id
-    );
-
-    return apiResponse(res, true, "Group savings broken", result);
+    return apiResponse(res, result.success, result.message, result.data);
   };
 }

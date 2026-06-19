@@ -1,3 +1,4 @@
+import { autoConvertObjectIdsAsync } from "@/utils/mongoose-plugins";
 import mongoose from "mongoose";
 
 const inspectionSchema = new mongoose.Schema(
@@ -27,6 +28,8 @@ const inspectionSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+inspectionSchema.plugin(autoConvertObjectIdsAsync(['userId', 'propertyId']))
 
 export const InspectionModel = mongoose.model(
   "Inspection",

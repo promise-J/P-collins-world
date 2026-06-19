@@ -1,3 +1,4 @@
+import { autoConvertObjectIdsAsync } from "@/utils/mongoose-plugins";
 import mongoose from "mongoose";
 
 const savingsGroupSchema = new mongoose.Schema(
@@ -65,6 +66,8 @@ const savingsGroupSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+savingsGroupSchema.plugin(autoConvertObjectIdsAsync(['ownerId', 'members.userId']))
 
 export const SavingsGroupModel = mongoose.model(
   "SavingsGroup",

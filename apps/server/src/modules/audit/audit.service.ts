@@ -1,3 +1,4 @@
+import { serviceResponse } from "@/utils/apiResponse";
 import { AuditLogModel } from "./audit-log.model";
 
 export class AuditService {
@@ -32,19 +33,21 @@ export class AuditService {
 
     const total = await AuditLogModel.countDocuments(query);
 
-    return {
+    return serviceResponse(true, 'Audit logs', {
       data: logs,
       total,
       page,
       totalPages: Math.ceil(total / limit)
-    };
+    });
   }
 
   async getUserAuditLogs(userId: string, page: number = 1, limit: number = 20) {
-    return this.getAuditLogs({ userId }, page, limit);
+    const result = await this.getAuditLogs({ userId }, page, limit);
+    return serviceResponse(true, 'User audit', result)
   }
 
   async getModuleAuditLogs(module: string, page: number = 1, limit: number = 50) {
-    return this.getAuditLogs({ module }, page, limit);
+    const result = await this.getAuditLogs({ module }, page, limit);
+    return serviceResponse(true, 'Module audit', result)
   }
 }

@@ -2,7 +2,7 @@ import { Router } from "express";
 import { asyncHandler } from "../../utils/asyncHandler";
 import { AuthController } from "./auth.controller";
 import { validate } from "../middleware/validate.middleware";
-import { loginSchema, registerSchema, forgotPasswordSchema, resetPasswordSchema } from "./auth.validation";
+import { loginSchema, registerSchema, forgotPasswordSchema, resetPasswordSchema, resendVerificationSchema } from "./auth.validation";
 import { authenticate } from "../middleware/auth.middleware";
 
 const router = Router();
@@ -16,7 +16,7 @@ router.post("/refresh", asyncHandler(controller.refresh));
 router.post("/forgot-password", validate(forgotPasswordSchema), asyncHandler(controller.forgotPassword));
 router.post("/reset-password/:token", validate(resetPasswordSchema), asyncHandler(controller.resetPassword));
 router.get("/verify-email/:token", asyncHandler(controller.verifyEmail));
-router.post("/resend-verification", asyncHandler(controller.resendVerification));
+router.post("/resend-verification", validate(resendVerificationSchema), asyncHandler(controller.resendVerification));
 
 // Protected routes
 router.get("/logout", authenticate, asyncHandler(controller.logout));
