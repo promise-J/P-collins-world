@@ -1,3 +1,4 @@
+import { autoConvertObjectIdsAsync } from "@/utils/mongoose-plugins";
 import mongoose from "mongoose";
 
 const mediaSchema =
@@ -32,6 +33,8 @@ new mongoose.Schema(
  timestamps:true
 }
 );
+
+mediaSchema.plugin(autoConvertObjectIdsAsync(['ownerId']))
 
 export const MediaModel =
 mongoose.model(

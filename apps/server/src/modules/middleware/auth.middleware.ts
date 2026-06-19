@@ -16,7 +16,6 @@ export const authenticate = async (
   }
 
   try {
-    console.log('Token found:', token);
 
     const decoded = JwtService.verifyAccessToken(token);
     const userId = decoded.userId;

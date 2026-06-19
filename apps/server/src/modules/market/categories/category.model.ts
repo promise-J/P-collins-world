@@ -1,3 +1,4 @@
+import { autoConvertObjectIdsAsync } from "@/utils/mongoose-plugins";
 import mongoose from "mongoose";
 
 // Suggested Category Model
@@ -13,5 +14,8 @@ const categorySchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+categorySchema.plugin(autoConvertObjectIdsAsync(['parentId']))
+
 
 export const CategoryModel = mongoose.model("Category", categorySchema);

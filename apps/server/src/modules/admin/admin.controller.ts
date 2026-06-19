@@ -36,50 +36,47 @@ export class AdminController {
   };
 
   dashboardMetrics = async (req: Request, res: Response) => {
-    const kyc = await this.service.dashboardMetrics();
+    const result = await this.service.dashboardMetrics();
 
-    return apiResponse(res, true, "Dashboard metrics fetched", kyc);
+
+    return apiResponse(res, result.success, result.message, result.data);
   };
 
   getUsers = async (req: Request, res: Response) => {
-    const kyc = await this.service.getUsers(req.query);
+    const result = await this.service.getUsers(req.query);
 
-    return apiResponse(res, true, "KYC reviewed", kyc);
+    return apiResponse(res, result.success, result.message, result.data);
   };
   pendingKyc = async (req: Request, res: Response) => {
-    const kyc = await this.service.pendingKyc();
+    const result = await this.service.pendingKyc();
 
-    return apiResponse(res, true, "KYC reviewed", kyc);
+    return apiResponse(res, result.success, result.message, result.data);
   };
   monthlyRevenue = async (req: Request, res: Response) => {
-    const kyc = await this.service.monthlyRevenue();
+    const result = await this.service.monthlyRevenue();
 
-    return apiResponse(res, true, "KYC reviewed", kyc);
+    return apiResponse(res, result.success, result.message, result.data);
   };
   topProducts = async (req: Request, res: Response) => {
-    const kyc = await this.service.topProducts();
+    const result = await this.service.topProducts();
 
-    return apiResponse(res, true, "KYC reviewed", kyc);
+    return apiResponse(res, result.success, result.message, result.data);
   };
   totalSavings = async (req: Request, res: Response) => {
-    const kyc = await this.service.totalSavings();
+    const result = await this.service.totalSavings();
 
-    return apiResponse(res, true, "KYC reviewed", kyc);
+    return apiResponse(res, result.success, result.message, result.data);
   };
   updateUserRole = async (req: any, res: Response) => {
     const { userId } = req.params;
     const { role } = req.body;
     
-    const user = await UserModel.findByIdAndUpdate(
+    const result = await UserModel.findByIdAndUpdate(
       userId,
       { role },
       { new: true }
     );
+    return apiResponse(res, true, 'User role updated successfully');
     
-    if (!user) {
-      return apiResponse(res, false, "User not found");
-    }
-    
-    return apiResponse(res, true, "Role updated successfully", user);
   };
 }

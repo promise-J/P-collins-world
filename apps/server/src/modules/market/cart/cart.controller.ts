@@ -8,25 +8,25 @@ export class CartController {
   private service = new CartService();
 
   addToCart = async (req: any, res: Response) => {
-    const cart = await this.service.addToCart(
-      req.user.userId,
+    const result = await this.service.addToCart(
+      req.user._id,
       req.body.productId,
       req.body.quantity,
       req.body.price
     );
 
-    return apiResponse(res, true, "Added to cart", cart);
+    return apiResponse(res, result.success, result.message, result.data);
   };
 
   getCart = async (req: any, res: Response) => {
-    const cart = await this.service.getCart(req.user.userId);
+    const result = await this.service.getCart(req.user._id);
 
-    return apiResponse(res, true, "Cart fetched", cart);
+    return apiResponse(res, result.success, result.message, result.data);
   };
 
   clearCart = async (req: any, res: Response) => {
-    await this.service.clearCart(req.user.userId);
+    const result = await this.service.clearCart(req.user._id);
 
-    return apiResponse(res, true, "Cart cleared");
+    return apiResponse(res, result.success, result.message, result.data);
   };
 }

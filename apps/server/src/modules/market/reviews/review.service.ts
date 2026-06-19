@@ -1,16 +1,17 @@
 import mongoose from "mongoose";
 import { ReviewModel } from "./review.model";
 import { ProductModel } from "../products/product.model";
+import { serviceResponse } from "@/utils/apiResponse";
 
 export class ReviewService {
   async createReview(userId: string, productId: string, rating: number, comment: string) {
     const product = await ProductModel.findById(productId);
-    if (!product) throw new Error("Product not found");
+    if (!product) return serviceResponse(false, "Product not found");
 
     const existing = await ReviewModel.findOne({ userId, productId });
-    if (existing) throw new Error("You have already reviewed this product");
+    if (existing) return serviceResponse(false, "You have already reviewed this product");
 
-    if (rating < 1 || rating > 5) throw new Error("Rating must be between 1 and 5");
+    if (rating < 1 || rating > 5) return serviceResponse(false, "Rating must be between 1 and 5");
 
     const review = await ReviewModel.create({
       userId,
@@ -21,7 +22,8 @@ export class ReviewService {
 
     await this.updateProductRating(productId);
 
-    return review.populate("userId", "firstName lastName avatar");
+    const result = review.populate("userId", "firstName lastName avatar");
+    return serviceResponse(true, 'Review created', result)
   }
 
   async getProductReviews(productId: string, page: number = 1, limit: number = 10) {
@@ -35,22 +37,22 @@ export class ReviewService {
 
     const averageRating = await this.getAverageRating(productId);
 
-    return {
+    return serviceResponse(true, 'Product reviews', {
       data: reviews,
       averageRating,
       total,
       page,
       totalPages: Math.ceil(total / limit)
-    };
+    });
   }
 
   async updateReview(reviewId: string, userId: string, rating?: number, comment?: string) {
     const review = await ReviewModel.findById(reviewId);
-    if (!review) throw new Error("Review not found");
-    if (review?.userId?.toString() !== userId) throw new Error("Unauthorized");
+    if (!review) return serviceResponse(false, "Review not found");
+    if (review?.userId?.toString() !== userId) return serviceResponse(false, "Unauthorized");
 
     if (rating) {
-      if (rating < 1 || rating > 5) throw new Error("Rating must be between 1 and 5");
+      if (rating < 1 || rating > 5) return serviceResponse(false, "Rating must be between 1 and 5");
       review.rating = rating;
     }
     if (comment) review.comment = comment;
@@ -59,15 +61,15 @@ export class ReviewService {
 
     await this.updateProductRating(review?.productId?.toString() ?? "");
 
-    return review;
+    return serviceResponse(true, 'Review updated', review);
   }
 
   async deleteReview(reviewId: string, userId: string, isAdmin: boolean = false) {
     const review = await ReviewModel.findById(reviewId);
-    if (!review) throw new Error("Review not found");
+    if (!review) return serviceResponse(false, "Review not found");
     
     if (!isAdmin && (review?.userId?.toString() ?? "") !== userId) {
-      throw new Error("Unauthorized");
+      return serviceResponse(false, "Unauthorized");
     }
 
     const productId = review?.productId?.toString();
@@ -75,7 +77,7 @@ export class ReviewService {
 
     await this.updateProductRating(productId ?? "");
 
-    return true;
+    return serviceResponse(true, 'Review deleted', true);
   }
 
   async getUserReviews(userId: string, page: number = 1, limit: number = 10) {
@@ -87,12 +89,12 @@ export class ReviewService {
 
     const total = await ReviewModel.countDocuments({ userId });
 
-    return {
+    return serviceResponse(true, 'User review', {
       data: reviews,
       total,
       page,
       totalPages: Math.ceil(total / limit)
-    };
+    });
   }
 
   private async getAverageRating(productId: string): Promise<number> {
@@ -100,7 +102,8 @@ export class ReviewService {
       { $match: { productId: new mongoose.Types.ObjectId(productId) } },
       { $group: { _id: null, avg: { $avg: "$rating" } } }
     ]);
-    return result[0]?.avg || 0;
+    const value = result[0]?.avg || 0;
+    return serviceResponse(true, 'Average rating', value)
   }
 
   private async updateProductRating(productId: string) {
@@ -116,5 +119,7 @@ export class ReviewService {
       rating: Math.round(avgRating * 10) / 10,
       totalReviews
     });
+
+    return serviceResponse(true, 'Product rating updated')
   }
 }

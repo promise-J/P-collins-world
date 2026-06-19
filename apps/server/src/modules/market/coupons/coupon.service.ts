@@ -1,5 +1,6 @@
 import { ApiError } from "@/utils/apiError";
 import { CouponModel } from "./coupon.model";
+import { serviceResponse } from "@/utils/apiResponse";
 
 
 export class CouponService {
@@ -7,22 +8,22 @@ export class CouponService {
     const coupon = await CouponModel.findOne({ code });
 
     if (!coupon || !coupon.isActive) {
-      throw new ApiError(400, "Invalid coupon");
+      return serviceResponse(false, "Invalid coupon");
     }
 
     if (coupon.expiresAt && coupon.expiresAt < new Date()) {
-        throw new ApiError(400, "Coupon expired");
+        return serviceResponse(false, "Coupon expired");
     }
 
     if (orderAmount < coupon.minOrderAmount) {
-      throw new ApiError(400, "Order too small for coupon");
+      return serviceResponse(false, "Order too small for coupon");
     }
 
     if (
       coupon.maxUsage &&
       coupon.usedCount >= coupon.maxUsage
     ) {
-      throw new ApiError(400, "Coupon exhausted");
+      return serviceResponse(false, "Coupon exhausted");
     }
 
     let discount = 0;
@@ -33,16 +34,18 @@ export class CouponService {
       discount = (orderAmount * (coupon.value ?? 1)) / 100;
     }
 
-    return {
+    return serviceResponse(true, 'Coupon is valid', {
       discount,
       finalAmount: orderAmount - discount
-    };
+    });
   }
 
   async incrementUsage(code: string) {
-    return CouponModel.updateOne(
+    await CouponModel.updateOne(
       { code },
       { $inc: { usedCount: 1 } }
     );
+
+    return serviceResponse(true, 'Coupon updated')
   }
 }

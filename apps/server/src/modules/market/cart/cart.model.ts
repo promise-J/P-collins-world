@@ -1,3 +1,4 @@
+import { autoConvertObjectIdsAsync } from "@/utils/mongoose-plugins";
 import mongoose from "mongoose";
 
 const cartSchema = new mongoose.Schema(
@@ -23,5 +24,8 @@ const cartSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+cartSchema.plugin(autoConvertObjectIdsAsync(['userId']))
+
 
 export const CartModel = mongoose.model("Cart", cartSchema);

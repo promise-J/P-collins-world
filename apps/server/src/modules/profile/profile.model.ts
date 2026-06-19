@@ -1,3 +1,4 @@
+import { autoConvertObjectIdsAsync } from "@/utils/mongoose-plugins";
 import mongoose from "mongoose";
 
 const profileSchema = new mongoose.Schema(
@@ -40,5 +41,7 @@ const profileSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+profileSchema.plugin(autoConvertObjectIdsAsync(['userId']))
 
 export const ProfileModel = mongoose.model("Profile", profileSchema);

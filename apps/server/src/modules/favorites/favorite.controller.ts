@@ -7,32 +7,33 @@ export class FavoriteController {
 
   addFavorite = async (req: any, res: Response) => {
     const result = await this.service.addFavorite(
-      req.user.userId,
+      req.user._id,
       req.params.propertyId
     );
-    return apiResponse(res, true, "Added to favorites", result);
+    return apiResponse(res, result.success, result.message, result.data);
   };
 
   removeFavorite = async (req: any, res: Response) => {
     const result = await this.service.removeFavorite(
-      req.user.userId,
+      req.user._id,
       req.params.propertyId
     );
-    return apiResponse(res, true, "Removed from favorites", result);
+    return apiResponse(res, result.success, result.message, result.data);
   };
 
   getMyFavorites = async (req: any, res: Response) => {
     const page = req.query.page ? parseInt(req.query.page as string) : 1;
     const limit = req.query.limit ? parseInt(req.query.limit as string) : 10;
-    const favorites = await this.service.getUserFavorites(req.user.userId, page, limit);
-    return apiResponse(res, true, "Favorites fetched", favorites);
+    const result = await this.service.getUserFavorites(req.user._id, page, limit);
+    return apiResponse(res, result.success, result.message, result.data);
+
   };
 
   isFavorited = async (req: any, res: Response) => {
-    const isFav = await this.service.isFavorited(
-      req.user.userId,
+    const result = await this.service.isFavorited(
+      req.user._id,
       req.params.propertyId
     );
-    return apiResponse(res, true, "Favorite status", { isFavorited: isFav });
+    return apiResponse(res, result.success, result.message, { isFavorited: result.data });
   };
 }

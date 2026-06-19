@@ -1,13 +1,14 @@
 import { OrderModel } from "./order.model";
 
 import { CartModel } from "../cart/cart.model";
+import { serviceResponse } from "@/utils/apiResponse";
 
 export class OrderService {
   async createOrderFromCart(userId: string) {
     const cart = await CartModel.findOne({ userId });
 
     if (!cart || cart.items.length === 0) {
-      throw new Error("Cart is empty");
+      return serviceResponse(false, "Cart is empty");
     }
 
     const total = cart.items.reduce(
@@ -24,18 +25,22 @@ export class OrderService {
 
     await CartModel.deleteOne({ userId });
 
-    return order;
+    return serviceResponse(true, 'Order created', order);
   }
 
   async markAsPaid(orderId: string, ref: string) {
-    return OrderModel.findByIdAndUpdate(orderId, {
+    const order = await OrderModel.findByIdAndUpdate(orderId, {
       status: "PAID",
       paymentReference: ref
     });
+
+    return serviceResponse(true, 'Order marked as paid')
   }
   async getUserOrders(userId: string) {
-    return OrderModel.find({ userId }).sort({
+    const orders = await OrderModel.find({ userId }).sort({
       createdAt: -1
     });
+
+    return serviceResponse(true, 'Order fetched', orders)
   }
 }

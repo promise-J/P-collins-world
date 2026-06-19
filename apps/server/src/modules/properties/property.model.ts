@@ -1,3 +1,4 @@
+import { autoConvertObjectIdsAsync } from "@/utils/mongoose-plugins";
 import mongoose from "mongoose";
 
 export enum PropertyStatus {
@@ -117,5 +118,8 @@ propertySchema.index({
   "location.city": "text",
   "location.state": "text"
 });
+
+propertySchema.plugin(autoConvertObjectIdsAsync(['landlordId','agentId']))
+
 
 export const PropertyModel = mongoose.model("Property", propertySchema);

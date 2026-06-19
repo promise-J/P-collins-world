@@ -1,27 +1,13 @@
 import { Response } from "express";
 
-import { UploadService }
-from "./upload.service";
+import { UploadService } from "./upload.service";
 
 export class UploadController {
+  private service = new UploadService();
 
- private service =
- new UploadService();
+  upload = async (req: any, res: Response) => {
+    const result = await this.service.uploadFile(req.file, req.body.folder);
 
- upload =
- async(
-  req:any,
-  res:Response
- )=>{
-
-   const result =
-   await this.service.uploadFile(
-     req.file,
-     req.body.folder
-   );
-
-   res.json(result);
-
- };
-
+    res.json(result);
+  };
 }

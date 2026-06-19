@@ -1,4 +1,5 @@
 
+import { autoConvertObjectIdsAsync } from "@/utils/mongoose-plugins";
 import mongoose from "mongoose";
 
 export enum Frequency {
@@ -43,6 +44,8 @@ const savingsPlanSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+savingsPlanSchema.plugin(autoConvertObjectIdsAsync(['userId']))
 
 export const SavingsPlanModel = mongoose.model(
   "SavingsPlan",

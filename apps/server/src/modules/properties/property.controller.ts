@@ -25,40 +25,40 @@ export class PropertyController {
         approvalStatus: "pending"
       };
       
-      const property = await this.service.createProperty(propertyData, user?._id.toString() ?? "");
-      return apiResponse(res, true, "Property created successfully", property);
+      const result = await this.service.createProperty(propertyData, user?._id.toString() ?? "");
+      return apiResponse(res, result.success, result.message, result.data);
     } catch (error) {
       return apiResponse(res, false, "Failed to create property");
     }
   };
 
   getOne = async (req: Request, res: Response) => {
-    const property = await this.service.getProperty(req.params.id as string);
+    const result = await this.service.getProperty(req.params.id as string);
 
-    return apiResponse(res, true, "Property fetched", property);
+    return apiResponse(res, result.success, result.message, result.data);
   };
 
   list = async (req: Request, res: Response) => {
-    const properties = await this.service.listProperties(req.query);
+    const result = await this.service.listProperties(req.query);
 
-    return apiResponse(res, true, "Properties fetched", properties);
+    return apiResponse(res, result.success, result.message, result.data);
   };
 
   search = async (req: Request, res: Response) => {
-    const results = await this.service.searchProperties(
+    const result = await this.service.searchProperties(
       req.query.q as string
     );
 
-    return apiResponse(res, true, "Search results", results);
+    return apiResponse(res, result.success, result.message, result.data);
   };
 
   update = async (req: any, res: Response) => {
-    const updated = await this.service.updateProperty(
+    const result = await this.service.updateProperty(
       req.params.id,
-      req.user.userId,
+      req.user._id,
       req.body
     );
 
-    return apiResponse(res, true, "Property updated", updated);
+    return apiResponse(res, result.success, result.message, result.data);
   };
 }

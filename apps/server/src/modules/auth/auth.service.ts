@@ -269,56 +269,54 @@ export class AuthService {
 
   async forgotPassword(email: string) {
     const user = await this.repository.findByEmail(email);
-
+  
     if (!user) {
-      // Don't reveal that user doesn't exist for security
       return serviceResponse(
         true,
         "If your email is registered, you will receive a reset link"
       );
     }
-
-    // Generate password reset token
+  
     const resetToken = crypto.randomBytes(32).toString("hex");
-    const resetExpires = new Date(Date.now() + 1 * 60 * 60 * 1000);
-
+    const resetExpires = new Date(Date.now() + 1 * 60 * 15 * 1000);
+  
     user.passwordResetToken = resetToken;
     user.passwordResetExpires = resetExpires;
     await user.save();
-
-    const resetLink = `${process.env.WEB_URL}/reset-password/${resetToken}`;
-
+  
+    const resetLink = `${process.env.WEB_URL || 'http://localhost:5173'}/reset-password/${resetToken}`;
+  
     await emailAction({
       action: "forgotPasswordEmail",
       options: {
         to: user.email,
-        subject: "Password Reset Request",
-        html: passwordResetEmail(resetLink),
+        subject: "Password Reset Request - P Collins",
+        html: passwordResetEmail(resetLink, user.firstName),
       },
     });
-
+  
     return serviceResponse(
       true,
       "If your email is registered, you will receive a reset link"
     );
   }
-
+  
   async resetPassword(token: string, newPassword: string) {
     const user = await UserModel.findOne({
       passwordResetToken: token,
       passwordResetExpires: { $gt: new Date() },
     });
-
+  
     if (!user) {
       return serviceResponse(false, "Invalid or expired reset token");
     }
-
+  
     const hashedPassword = await bcrypt.hash(newPassword, 12);
     user.password = hashedPassword;
     user.passwordResetToken = undefined;
     user.passwordResetExpires = undefined;
     await user.save();
-
+  
     return serviceResponse(true, "Password reset successfully");
   }
 

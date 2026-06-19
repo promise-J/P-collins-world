@@ -1,3 +1,4 @@
+import { autoConvertObjectIdsAsync } from "@/utils/mongoose-plugins";
 import mongoose from "mongoose";
 
 export enum ProductStatus {
@@ -27,7 +28,13 @@ const productSchema = new mongoose.Schema(
       index: true
     },
 
-    images: [String],
+    images: [
+      {
+        url: String,
+        publicId: String,
+        _id: false
+      }
+    ],
 
     stock: {
       type: Number,
@@ -72,6 +79,9 @@ productSchema.index({
   name: "text",
   description: "text"
 });
+
+productSchema.plugin(autoConvertObjectIdsAsync(['categoryId', 'createdBy', 'updatedBy']))
+
 
 export const ProductModel = mongoose.model(
   "Product",

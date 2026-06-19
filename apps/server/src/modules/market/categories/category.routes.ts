@@ -8,11 +8,11 @@ import { authenticate } from "@/modules/middleware/auth.middleware";
 const router = Router()
 const controller = new CategoryController()
 
-router.post("/", authenticate, authorize(UserRole.ADMIN), asyncHandler(controller.create));
+router.post("/", authenticate, authorize([UserRole.SUPER_ADMIN, UserRole.ADMIN]), asyncHandler(controller.create));
 router.get("/", asyncHandler(controller.list));
 router.get("/:slug", asyncHandler(controller.getBySlug));
-router.patch("/:id", authenticate, authorize(UserRole.ADMIN), asyncHandler(controller.update));
-router.delete("/:id", authenticate, authorize(UserRole.ADMIN), asyncHandler(controller.delete));
+router.patch("/:id", authenticate, authorize([UserRole.SUPER_ADMIN, UserRole.ADMIN]), asyncHandler(controller.update));
+router.delete("/:id", authenticate, authorize([UserRole.SUPER_ADMIN, UserRole.ADMIN]), asyncHandler(controller.delete));
 
 
 export default router

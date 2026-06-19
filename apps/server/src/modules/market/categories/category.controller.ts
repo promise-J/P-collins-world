@@ -7,28 +7,27 @@ export class CategoryController {
   private service = new CategoryService();
 
   create = async (req: any, res: Response) => {
-    const category = await this.service.create(req.body);
-    return apiResponse(res, true, "Category created", category);
+    const result = await this.service.create(req.body);
+    return apiResponse(res, result.success, result.message, result.data);
   };
 
-  // 🟢 This will now resolve perfectly to Express Request
   list = async (req: Request, res: Response) => {
-    const categories = await this.service.list();
-    return apiResponse(res, true, "Categories fetched", categories);
+    const result = await this.service.list();
+    return apiResponse(res, result.success, result.message, result.data);
   };
 
   getBySlug = async (req: Request, res: Response) => {
-    const category = await this.service.getBySlug(req.params.slug as string);
-    return apiResponse(res, true, "Category fetched", category);
+    const result = await this.service.getBySlug(req.params.slug as string);
+    return apiResponse(res, result.success, result.message, result.data);
   };
 
   update = async (req: any, res: Response) => {
-    const category = await this.service.update(req.params.id, req.body);
-    return apiResponse(res, true, "Category updated", category);
+    const result = await this.service.update(req.params.id, req.body);
+    return apiResponse(res, result.success, result.message, result.data);
   };
 
   delete = async (req: any, res: Response) => {
-    await this.service.delete(req.params.id);
-    return apiResponse(res, true, "Category deleted");
+    const result = await this.service.delete(req.params.id);
+    return apiResponse(res, result.success, result.message, result.data);
   };
 }

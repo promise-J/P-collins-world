@@ -1,8 +1,9 @@
 import streamifier from "streamifier";
-import { UploadApiResponse, UploadApiErrorResponse } from "cloudinary";
+import { UploadApiResponse, UploadApiErrorResponse } from "cloudinary"; // 👈 Add this import
 import cloudinary from "../../config/cloudinary";
 
 export class UploadService {
+  // Explicitly return a Promise containing Cloudinary's api response layout
   async uploadFile(
     file: Express.Multer.File,
     folder: string

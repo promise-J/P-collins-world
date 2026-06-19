@@ -5,6 +5,7 @@ import { PropertyModel } from "../properties/property.model";
 import { TransactionModel, TransactionStatus } from "../wallet/transaction.model";
 import { SavingsPlanModel } from "../savings/saving-plan.model";
 import { SavingsGroupModel } from "../savings/saving-group.model";
+import { serviceResponse } from "@/utils/apiResponse";
 
 export class AnalyticsService {
   async getPlatformMetrics() {
@@ -24,14 +25,14 @@ export class AnalyticsService {
       SavingsGroupModel.countDocuments()
     ]);
 
-    return {
+    return serviceResponse(true, 'Platform metrics', {
       users: totalUsers,
       products: totalProducts,
       orders: totalOrders,
       properties: totalProperties,
       savingsPlans: totalSavingsPlans,
       savingsGroups: totalSavingsGroups
-    };
+    });
   }
 
   async getRevenueAnalytics(startDate?: Date, endDate?: Date) {
@@ -60,7 +61,7 @@ export class AnalyticsService {
 
     const totalRevenue = revenue.reduce((sum, r) => sum + r.total, 0);
 
-    return { revenue, totalRevenue };
+    return serviceResponse(true, 'Revenue analytics', { revenue, totalRevenue });
   }
 
   async getProductAnalytics() {
@@ -79,7 +80,7 @@ export class AnalyticsService {
       }
     ]);
 
-    return { topProducts, categoryStats };
+    return serviceResponse(true, 'Product analytics', { topProducts, categoryStats });
   }
 
   async getUserAnalytics() {
@@ -95,7 +96,7 @@ export class AnalyticsService {
     const verifiedUsers = await UserModel.countDocuments({ isVerified: true });
     const pendingKYC = await UserModel.countDocuments({ isVerified: false });
 
-    return { usersByRole, verifiedUsers, pendingKYC };
+    return serviceResponse(true, 'User analytics', { usersByRole, verifiedUsers, pendingKYC });
   }
 
   async getPropertyAnalytics() {
@@ -126,11 +127,11 @@ export class AnalyticsService {
       }
     ]);
 
-    return {
+    return serviceResponse(true, 'Property analytics', {
       byStatus: propertiesByStatus,
       byType: propertiesByType,
       averagePrice: averagePrice[0]?.avg || 0
-    };
+    });
   }
 
   async getSavingsAnalytics() {
@@ -155,11 +156,11 @@ export class AnalyticsService {
     const completedPlans = await SavingsPlanModel.countDocuments({ isCompleted: true });
     const activePlans = await SavingsPlanModel.countDocuments({ isCompleted: false });
 
-    return {
+    return serviceResponse(true, 'Savings analytics', {
       personalSavings: totalSavedPersonal[0]?.total || 0,
       groupSavings: totalSavedGroup[0]?.total || 0,
       completedPlans,
       activePlans
-    };
+    });
   }
 }

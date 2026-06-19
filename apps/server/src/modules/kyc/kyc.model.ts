@@ -1,3 +1,4 @@
+import { autoConvertObjectIdsAsync } from "@/utils/mongoose-plugins";
 import mongoose from "mongoose";
 
 export enum KYCStatus {
@@ -54,5 +55,7 @@ const kycSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+kycSchema.plugin(autoConvertObjectIdsAsync(['userId']))
 
 export const KYCModel = mongoose.model("KYC", kycSchema);

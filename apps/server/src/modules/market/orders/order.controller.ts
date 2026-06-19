@@ -8,25 +8,25 @@ export class OrderController {
   private service = new OrderService();
 
   createFromCart = async (req: any, res: Response) => {
-    const order = await this.service.createOrderFromCart(
-      req.user.userId
+    const result = await this.service.createOrderFromCart(
+      req.user._id
     );
 
-    return apiResponse(res, true, "Order created", order);
+    return apiResponse(res, result.success, result.message, result.data);
   };
 
   getMyOrders = async (req: any, res: Response) => {
-    const orders = await this.service.getUserOrders(req.user.userId);
+    const result = await this.service.getUserOrders(req.user._id);
 
-    return apiResponse(res, true, "Orders fetched", orders);
+    return apiResponse(res, result.success, result.message, result.data);
   };
 
   markAsPaid = async (req: any, res: Response) => {
-    const order = await this.service.markAsPaid(
+    const result = await this.service.markAsPaid(
       req.params.id,
       req.body.reference
     );
 
-    return apiResponse(res, true, "Order updated", order);
+    return apiResponse(res, result.success, result.message, result.data);
   };
 }

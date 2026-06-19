@@ -9,26 +9,26 @@ export class CouponController {
   validateCoupon = async (req: any, res: Response) => {
     const { code, orderAmount } = req.body;
     const result = await this.service.validateCoupon(code, orderAmount);
-    return apiResponse(res, true, "Coupon validated", result);
+    return apiResponse(res, result.success, result.message, result.data);
   };
 
   createCoupon = async (req: any, res: Response) => {
-    const coupon = await CouponModel.create(req.body);
-    return apiResponse(res, true, "Coupon created", coupon);
+    const result = await CouponModel.create(req.body);
+    return apiResponse(res, true, 'Coupon created', result);
   };
 
   listCoupons = async (req: any, res: Response) => {
-    const coupons = await CouponModel.find().sort({ createdAt: -1 });
-    return apiResponse(res, true, "Coupons fetched", coupons);
+    const result = await CouponModel.find().sort({ createdAt: -1 });
+    return apiResponse(res, true, 'Coupon fetched', result);
   };
 
   updateCoupon = async (req: any, res: Response) => {
-    const coupon = await CouponModel.findByIdAndUpdate(req.params.id, req.body, { new: true });
-    return apiResponse(res, true, "Coupon updated", coupon);
+    const result = await CouponModel.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    return apiResponse(res, true, 'Coupon updated');
   };
 
   deleteCoupon = async (req: any, res: Response) => {
-    await CouponModel.findByIdAndDelete(req.params.id);
-    return apiResponse(res, true, "Coupon deleted");
+    const result = await CouponModel.findByIdAndDelete(req.params.id);
+    return apiResponse(res, true, 'Coupon deleted');
   };
 }
