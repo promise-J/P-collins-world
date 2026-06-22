@@ -2,6 +2,7 @@ import { OrderModel } from "./order.model";
 
 import { CartModel } from "../cart/cart.model";
 import { serviceResponse } from "@/utils/apiResponse";
+import { ProductModel } from "../products/product.model";
 
 export class OrderService {
   async createOrderFromCart(userId: string) {
@@ -27,20 +28,49 @@ export class OrderService {
 
     return serviceResponse(true, 'Order created', order);
   }
-
-  async markAsPaid(orderId: string, ref: string) {
-    const order = await OrderModel.findByIdAndUpdate(orderId, {
-      status: "PAID",
-      paymentReference: ref
-    });
-
-    return serviceResponse(true, 'Order marked as paid')
-  }
   async getUserOrders(userId: string) {
     const orders = await OrderModel.find({ userId }).sort({
       createdAt: -1
     });
 
     return serviceResponse(true, 'Order fetched', orders)
+  }
+
+  async markAsPaid(orderId: string, paymentReference: string) {
+    const order = await OrderModel.findByIdAndUpdate(
+      orderId,
+      {
+        status: "PAID",
+        paymentReference,
+        paidAt: new Date(),
+      },
+      { new: true }
+    );
+
+    if (!order) {
+      return serviceResponse(false, "Order not found");
+    }
+
+    // Update product stock
+    for (const item of order.items) {
+      await ProductModel.findByIdAndUpdate(item.productId, {
+        $inc: { stock: -(item.quantity ?? 0), salesCount: item.quantity ?? 0 },
+      });
+    }
+
+    return serviceResponse(true, 'Marked as paid', order);
+  }
+
+  async markAsFailed(orderId: string, reason: string) {
+    const order = await OrderModel.findByIdAndUpdate(
+      orderId,
+      {
+        status: "CANCELLED",
+        cancellationReason: reason,
+      },
+      { new: true }
+    );
+
+    return serviceResponse(true, 'Marked as failed', order);
   }
 }

@@ -6,7 +6,8 @@ export enum OrderStatus {
   PAID = "PAID",
   SHIPPED = "SHIPPED",
   DELIVERED = "DELIVERED",
-  CANCELLED = "CANCELLED"
+  CANCELLED = "CANCELLED",
+  FAILED = "FAILED"
 }
 
 const orderSchema = new mongoose.Schema(
@@ -19,21 +20,56 @@ const orderSchema = new mongoose.Schema(
 
     items: [
       {
-        productId: mongoose.Types.ObjectId,
-        quantity: Number,
-        price: Number
-      }
+        productId: {
+          type: mongoose.Types.ObjectId,
+          ref: "Product",
+          required: true,
+        },
+        quantity: {
+          type: Number,
+          required: true,
+          min: 1,
+        },
+        price: {
+          type: Number,
+          required: true,
+        },
+      },
     ],
-
-    totalAmount: Number,
-
+    totalAmount: {
+      type: Number,
+      required: true,
+    },
+    shippingAddress: {
+      firstName: String,
+      lastName: String,
+      email: String,
+      phone: String,
+      address: String,
+      city: String,
+      state: String,
+      lga: String,
+      country: String,
+    },
     status: {
       type: String,
       enum: Object.values(OrderStatus),
-      default: OrderStatus.PENDING
+      default: OrderStatus.PENDING,
+      index: true,
     },
-
-    paymentReference: String
+    paymentReference: {
+      type: String,
+      index: true,
+    },
+    paymentMethod: {
+      type: String,
+      enum: ["wallet", "card"],
+      required: true,
+    },
+    paidAt: Date,
+    cancellationReason: String,
+    trackingNumber: String,
+    deliveryNotes: String,
   },
   { timestamps: true }
 );

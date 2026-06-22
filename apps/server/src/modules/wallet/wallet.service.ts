@@ -1,11 +1,10 @@
 import { WalletModel } from "./wallet.model";
 import { TransactionModel, TransactionStatus, TransactionType } from "./transaction.model";
-import { PaystackService } from "../payments/paystack.service";
-import { ApiError } from "@/utils/apiError";
 import { serviceResponse } from "@/utils/apiResponse";
+import { PaymentService } from "../payments/payment.service";
 
 export class WalletService {
-  private paystack = new PaystackService();
+  private paystack = new PaymentService();
 
   async getWallet(userId: string) {
     let wallet = await WalletModel.findOne({ userId });
