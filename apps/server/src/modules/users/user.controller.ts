@@ -3,11 +3,13 @@ import { Request, Response } from "express";
 import { UserService } from "./user.service";
 
 import { apiResponse } from "../../utils/apiResponse";
+import { ProfileModel } from "../profile/profile.model";
 
 export class UserController {
   private service = new UserService();
 
   getMe = async (req: any, res: Response) => {
+    
     if(!req.user){
       return apiResponse(res, false, 'User not found')
     }

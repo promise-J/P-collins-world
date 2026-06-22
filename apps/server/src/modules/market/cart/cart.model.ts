@@ -27,5 +27,6 @@ const cartSchema = new mongoose.Schema(
 
 cartSchema.plugin(autoConvertObjectIdsAsync(['userId']))
 
+cartSchema.index({ userId: 1, "items.productId": 1 }, { unique: true });
 
 export const CartModel = mongoose.model("Cart", cartSchema);
