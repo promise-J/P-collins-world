@@ -3,6 +3,8 @@ import { PaymentService } from "./payment.service";
 import { OrderService } from "../market/orders/order.service";
 import { apiResponse } from "../../utils/apiResponse";
 import { WalletService } from "../wallet/wallet.service";
+import { OrderModel, OrderStatus } from "../market/orders/order.model";
+import { ProductModel } from "../market/products/product.model";
 
 const paymentService = new PaymentService();
 const orderService = new OrderService();
@@ -80,6 +82,7 @@ export class PaymentController {
   // Webhook handler
   handleWebhook = async (req: Request, res: Response) => {
     try {
+      console.log("payment.controller.ts called...")
       const signature = req.headers["x-paystack-signature"] as string;
       const payload = JSON.stringify(req.body);
 
@@ -124,25 +127,56 @@ export class PaymentController {
 
   private async handleChargeSuccess(data: any) {
     const { reference, metadata, amount } = data;
-
-    console.log(`Charge successful: ${reference}`);
-
-    // Update order if metadata contains orderId
+  
+    console.log(`✅ Charge successful: ${reference}`);
+  
+    // Check if this is an order payment
     if (metadata?.orderId) {
-      await orderService.markAsPaid(metadata.orderId, reference);
+      // Find the order
+      const order = await OrderModel.findById(metadata.orderId);
+      if (!order) {
+        console.log(`❌ Order not found: ${metadata.orderId}`);
+        return;
+      }
+  
+      // Check if already paid
+      if (order.status === "PAID") {
+        console.log(`⚠️ Order ${metadata.orderId} already paid`);
+        return;
+      }
+  
+      // Update order status
+      order.status = OrderStatus.PAID;
+      order.paymentReference = reference;
+      order.paidAt = new Date();
+      await order.save();
+  
+      // Update product stock
+      for (const item of order.items) {
+        await ProductModel.findByIdAndUpdate(item.productId, {
+          $inc: { stock: -item.quantity, salesCount: item.quantity },
+        });
+      }
+  
+      console.log(`✅ Order ${metadata.orderId} marked as paid`);
+  
+      // Send notification to user
+      // await notificationService.create(
+      //   order.userId,
+      //   "Payment Successful",
+      //   `Your order #${order._id} has been paid successfully.`
+      // );
     }
-
-    // Fund wallet if metadata indicates wallet funding
+  
+    // Handle wallet funding
     if (metadata?.fundWallet && metadata?.userId) {
       await walletService.credit(
         metadata.userId,
         amount / 100,
         `WALLET_FUND_${reference}`
       );
+      console.log(`✅ Wallet funded for user ${metadata.userId}`);
     }
-
-    // You can also send notifications here
-    // await notificationService.create(userId, "Payment Successful", "Your payment was successful");
   }
 
   private async handleChargeFailed(data: any) {

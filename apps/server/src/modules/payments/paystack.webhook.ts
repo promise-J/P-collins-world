@@ -9,6 +9,7 @@ export class PaystackWebhook {
 
   handleWebhook = async (req: Request, res: Response) => {
     try {
+      console.log("paystack.webhook.ts called...")
       const signature = req.headers['x-paystack-signature'] as string;
       const payload = JSON.stringify(req.body);
 

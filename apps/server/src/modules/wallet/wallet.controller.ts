@@ -1,4 +1,4 @@
-import { Response } from "express";
+import { Response, Request } from "express";
 import { WalletService } from "./wallet.service";
 import { apiResponse } from "../../utils/apiResponse";
 
@@ -19,10 +19,10 @@ export class WalletController {
     return apiResponse(res, result.success, result.message, result.data);
   };
 
-  verifyFunding = async (req: any, res: Response) => {
-    const result = await this.service.verifyFunding(req.query.reference as string);
-    return apiResponse(res, result.success, result.message, result.data);
-  };
+  // verifyFunding = async (req: Request, res: Response) => {
+  //   const result = await this.service.verifyFunding(req.query.reference as string);
+  //   return apiResponse(res, result.success, result.message, result.data);
+  // };
 
   withdraw = async (req: any, res: Response) => {
     const result = await this.service.withdraw(

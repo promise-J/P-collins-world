@@ -8,7 +8,7 @@ const controller = new WalletController();
 
 router.get("/", authenticate, asyncHandler(controller.getWallet));
 router.post("/fund", authenticate, asyncHandler(controller.fundWallet));
-router.get("/verify", authenticate, asyncHandler(controller.verifyFunding));
+// router.get("/verify", authenticate, asyncHandler(controller.verifyFunding));
 router.post("/withdraw", authenticate, asyncHandler(controller.withdraw));
 router.get("/transactions", authenticate, asyncHandler(controller.getTransactions));
 

@@ -41,7 +41,6 @@ export class SavingsService {
   }
 
   async createGroup(userId: string, data: any) {
-    console.log({userId, ...data})
     // Check if user exists
     const user = await UserModel.findById(userId);
     if (!user) {
@@ -411,7 +410,6 @@ export class SavingsService {
     });
   }
   async getUserPlans(userId: string) {
-    console.log({userId})
     const savings = await SavingsPlanModel.find({ userId });
     return serviceResponse(true, 'Savings fetched', savings)
   }

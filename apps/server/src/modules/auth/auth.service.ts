@@ -12,6 +12,7 @@ import {
 import { firebaseAdmin } from "@/config/firebase-admin.config";
 import { emailAction } from "../email/email-action.service";
 import { UserRole } from "@/enum/role.enum";
+import { WalletModel } from "../wallet/wallet.model";
 
 export class AuthService {
   private repository = new AuthRepository();
@@ -39,6 +40,12 @@ export class AuthService {
       role,
       verifiedAgent: role === UserRole.AGENT ? false : undefined,
       verifiedLandlord: role === UserRole.LANDLORD ? false : undefined,
+    });
+
+    await WalletModel.create({
+      userId: user._id,
+      balance: 0,
+      pendingBalance: 0,
     });
 
     const verificationLink = `${process.env.WEB_URL}/verify-email/${verificationToken}`;
@@ -123,37 +130,42 @@ export class AuthService {
     });
   }
 
-  async googleAuth(data: { 
-    firebaseId: string; 
-    email: string; 
-    firstName: string; 
-    lastName: string; 
-    avatar?: string; 
+  async googleAuth(data: {
+    firebaseId: string;
+    email: string;
+    firstName: string;
+    lastName: string;
+    avatar?: string;
     idToken: string;
     role?: string;
     businessName?: string;
   }) {
     try {
-      const decodedToken = await firebaseAdmin.auth().verifyIdToken(data.idToken);
-      
+      const decodedToken = await firebaseAdmin
+        .auth()
+        .verifyIdToken(data.idToken);
+
       if (decodedToken.uid !== data.firebaseId) {
         return serviceResponse(false, "Invalid token");
       }
-  
+
       let user = await this.repository.findByFirebaseId(data.firebaseId);
       let isNewUser = false;
-  
+
       if (!user) {
         user = await this.repository.findByEmail(data.email);
-        
+
         if (user) {
-          user = await this.repository.updateFirebaseId(user._id.toString(), data.firebaseId);
+          user = await this.repository.updateFirebaseId(
+            user._id.toString(),
+            data.firebaseId
+          );
         }
       }
-      
+
       if (!user) {
         const role = data.role || UserRole.USER;
-        
+
         user = await this.repository.createUser({
           firstName: data.firstName,
           lastName: data.lastName,
@@ -171,21 +183,28 @@ export class AuthService {
       } else {
         const requestedRole = data.role || UserRole.USER;
         const userRole = user.role || UserRole.USER;
-        
+
         if (userRole !== requestedRole) {
-          return serviceResponse(false, `This account is registered as ${userRole}. Please sign in as ${userRole}.`, {
-            userRole: userRole,
-            requestedRole: requestedRole,
-            mismatch: true,
-          });
+          return serviceResponse(
+            false,
+            `This account is registered as ${userRole}. Please sign in as ${userRole}.`,
+            {
+              userRole: userRole,
+              requestedRole: requestedRole,
+              mismatch: true,
+            }
+          );
         }
       }
-      
+
       const accessToken = JwtService.signAccessToken(user._id.toString());
       const refreshToken = JwtService.signRefreshToken(user._id.toString());
-      
-      await this.repository.updateRefreshToken(user._id.toString(), refreshToken);
-      
+
+      await this.repository.updateRefreshToken(
+        user._id.toString(),
+        refreshToken
+      );
+
       const userData = {
         _id: user._id,
         firstName: user.firstName,
@@ -198,7 +217,7 @@ export class AuthService {
         verifiedAgent: user.verifiedAgent,
         verifiedLandlord: user.verifiedLandlord,
       };
-      
+
       if (isNewUser) {
         await emailAction({
           action: "welcomeEmail",
@@ -209,7 +228,7 @@ export class AuthService {
           },
         });
       }
-      
+
       return serviceResponse(true, "Google login successful", {
         user: userData,
         accessToken,
@@ -217,7 +236,7 @@ export class AuthService {
         isNewUser,
       });
     } catch (error) {
-      console.error('Google auth error:', error);
+      console.error("Google auth error:", error);
       return serviceResponse(false, "Google authentication failed");
     }
   }
@@ -269,23 +288,25 @@ export class AuthService {
 
   async forgotPassword(email: string) {
     const user = await this.repository.findByEmail(email);
-  
+
     if (!user) {
       return serviceResponse(
         true,
         "If your email is registered, you will receive a reset link"
       );
     }
-  
+
     const resetToken = crypto.randomBytes(32).toString("hex");
     const resetExpires = new Date(Date.now() + 1 * 60 * 15 * 1000);
-  
+
     user.passwordResetToken = resetToken;
     user.passwordResetExpires = resetExpires;
     await user.save();
-  
-    const resetLink = `${process.env.WEB_URL || 'http://localhost:5173'}/reset-password/${resetToken}`;
-  
+
+    const resetLink = `${
+      process.env.WEB_URL || "http://localhost:5173"
+    }/reset-password/${resetToken}`;
+
     await emailAction({
       action: "forgotPasswordEmail",
       options: {
@@ -294,29 +315,29 @@ export class AuthService {
         html: passwordResetEmail(resetLink, user.firstName),
       },
     });
-  
+
     return serviceResponse(
       true,
       "If your email is registered, you will receive a reset link"
     );
   }
-  
+
   async resetPassword(token: string, newPassword: string) {
     const user = await UserModel.findOne({
       passwordResetToken: token,
       passwordResetExpires: { $gt: new Date() },
     });
-  
+
     if (!user) {
       return serviceResponse(false, "Invalid or expired reset token");
     }
-  
+
     const hashedPassword = await bcrypt.hash(newPassword, 12);
     user.password = hashedPassword;
     user.passwordResetToken = undefined;
     user.passwordResetExpires = undefined;
     await user.save();
-  
+
     return serviceResponse(true, "Password reset successfully");
   }
 

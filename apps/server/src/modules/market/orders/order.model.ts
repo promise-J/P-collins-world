@@ -17,7 +17,6 @@ const orderSchema = new mongoose.Schema(
       ref: "User",
       index: true
     },
-
     items: [
       {
         productId: {
@@ -65,6 +64,14 @@ const orderSchema = new mongoose.Schema(
       type: String,
       enum: ["wallet", "card"],
       required: true,
+    },
+    deliveryFee: {
+      type: Number,
+      default: 0,
+    },
+    estimatedDays: {
+      type: Number,
+      default: 3,
     },
     paidAt: Date,
     cancellationReason: String,

@@ -21,6 +21,7 @@ import uploadRoutes from "../modules/uploads/upload.routes";
 import settingsRoutes from "../modules/users/user-settings/user-settings.routes";
 import wishlistRoutes from "../modules/wishlist/wishlist.routes"
 import paymentRoutes from "../modules/payments/payment.routes"
+import locationRoutes from "../modules/admin/location/location.routes"
 
 const router = Router();
 
@@ -46,5 +47,6 @@ router.use("/upload", uploadRoutes);
 router.use("/settings", settingsRoutes);
 router.use("/wishlist", wishlistRoutes);
 router.use("/payments", paymentRoutes);
+router.use("/locations", locationRoutes);
 
 export default router;
