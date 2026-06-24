@@ -1,3 +1,4 @@
+import crypto from 'crypto'
 import { Request, Response } from "express";
 import { PaymentService } from "./payment.service";
 import { OrderService } from "../market/orders/order.service";
@@ -5,7 +6,6 @@ import { apiResponse } from "../../utils/apiResponse";
 import { WalletService } from "../wallet/wallet.service";
 import { OrderModel, OrderStatus } from "../market/orders/order.model";
 import { ProductModel } from "../market/products/product.model";
-
 const paymentService = new PaymentService();
 const orderService = new OrderService();
 const walletService = new WalletService();
@@ -30,13 +30,26 @@ export class PaymentController {
       });
 
       if (result.success) {
-        return apiResponse(res, true, "Payment initialized successfully", result.data);
+        return apiResponse(
+          res,
+          true,
+          "Payment initialized successfully",
+          result.data
+        );
       } else {
-        return apiResponse(res, false, result.message || "Failed to initialize payment");
+        return apiResponse(
+          res,
+          false,
+          result.message || "Failed to initialize payment"
+        );
       }
     } catch (error: any) {
       console.error("Initialize payment error:", error);
-      return apiResponse(res, false, error.message || "Failed to initialize payment");
+      return apiResponse(
+        res,
+        false,
+        error.message || "Failed to initialize payment"
+      );
     }
   };
 
@@ -56,11 +69,17 @@ export class PaymentController {
         if (result.data.status === "success") {
           // Update order status if metadata contains orderId
           if (result.data.metadata?.orderId) {
-            await orderService.markAsPaid(result.data.metadata.orderId, reference as string);
+            await orderService.markAsPaid(
+              result.data.metadata.orderId,
+              reference as string
+            );
           }
 
           // Credit user's wallet if metadata contains wallet funding
-          if (result.data.metadata?.fundWallet && result.data.metadata?.userId) {
+          if (
+            result.data.metadata?.fundWallet &&
+            result.data.metadata?.userId
+          ) {
             await walletService.credit(
               result.data.metadata.userId,
               result.data.amount,
@@ -69,33 +88,51 @@ export class PaymentController {
           }
         }
 
-        return apiResponse(res, true, "Payment verified successfully", result.data);
+        return apiResponse(
+          res,
+          true,
+          "Payment verified successfully",
+          result.data
+        );
       } else {
-        return apiResponse(res, false, result.message || "Failed to verify payment");
+        return apiResponse(
+          res,
+          false,
+          result.message || "Failed to verify payment"
+        );
       }
     } catch (error: any) {
       console.error("Verify payment error:", error);
-      return apiResponse(res, false, error.message || "Failed to verify payment");
+      return apiResponse(
+        res,
+        false,
+        error.message || "Failed to verify payment"
+      );
     }
   };
 
   // Webhook handler
   handleWebhook = async (req: Request, res: Response) => {
     try {
-      console.log("payment.controller.ts called...")
-      const signature = req.headers["x-paystack-signature"] as string;
-      const payload = JSON.stringify(req.body);
+      const secret = process.env.PAYSTACK_SECRET_KEY;
+      const signature = req.headers["x-paystack-signature"];
 
-      // Verify webhook signature
-      const isValid = paymentService.verifyWebhookSignature(payload, signature);
+      // ✅ Ensure raw body for signature verification (middleware must provide rawBody)
+      const hash = crypto
+        .createHmac("sha512", secret!)
+        .update(req.body) // raw body, not parsed JSON
+        // .update(req.rawBody) // raw body, not parsed JSON
+        .digest("hex");
 
-      if (!isValid) {
-        return res.status(401).json({ message: "Invalid signature" });
+      if (hash !== signature) {
+        return res.status(401).send("Unauthorized: Invalid signature");
       }
-
-      const event = req.body;
+      const event = JSON.parse(req.body.toString());
+      if (!event?.event || !event?.data) return res.sendStatus(200);
 
       console.log("Paystack Webhook Event:", event.event);
+
+      // ends
 
       switch (event.event) {
         case "charge.success":
@@ -127,9 +164,9 @@ export class PaymentController {
 
   private async handleChargeSuccess(data: any) {
     const { reference, metadata, amount } = data;
-  
+
     console.log(`✅ Charge successful: ${reference}`);
-  
+
     // Check if this is an order payment
     if (metadata?.orderId) {
       // Find the order
@@ -138,28 +175,28 @@ export class PaymentController {
         console.log(`❌ Order not found: ${metadata.orderId}`);
         return;
       }
-  
+
       // Check if already paid
       if (order.status === "PAID") {
         console.log(`⚠️ Order ${metadata.orderId} already paid`);
         return;
       }
-  
+
       // Update order status
       order.status = OrderStatus.PAID;
       order.paymentReference = reference;
       order.paidAt = new Date();
       await order.save();
-  
+
       // Update product stock
       for (const item of order.items) {
         await ProductModel.findByIdAndUpdate(item.productId, {
           $inc: { stock: -item.quantity, salesCount: item.quantity },
         });
       }
-  
+
       console.log(`✅ Order ${metadata.orderId} marked as paid`);
-  
+
       // Send notification to user
       // await notificationService.create(
       //   order.userId,
@@ -167,7 +204,7 @@ export class PaymentController {
       //   `Your order #${order._id} has been paid successfully.`
       // );
     }
-  
+
     // Handle wallet funding
     if (metadata?.fundWallet && metadata?.userId) {
       await walletService.credit(
