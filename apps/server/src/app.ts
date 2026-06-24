@@ -10,9 +10,12 @@ import { requestLogger } from "./middleware/request-logger.middleware";
 import { errorMiddleware } from "./middleware/error.middleware";
 import { notFoundMiddleware } from "./middleware/not-found.middleware";
 import allRoutes from "./routes/index";
+import { PaymentWebhookController } from "./modules/webhook/webhook.js";
 
 
 const app = express();
+const webhookController = new PaymentWebhookController();
+
 
 app.use(requestLogger);
 
@@ -31,6 +34,8 @@ app.use(cors({
   ],
   credentials: true
 }));
+
+app.post("/webhook", express.raw({ type: "application/json" }), webhookController.handleWebhook);
 
 app.use(compression());
 
