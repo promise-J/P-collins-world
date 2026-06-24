@@ -42,33 +42,30 @@ export class WalletService {
     });
   }
 
-  async verifyFunding(reference: string) {
-    // This should be called via webhook ideally
-    // For now, manual verification
+  // async verifyFunding(reference: string) {
+  //   const transaction = await TransactionModel.findOne({ reference });
+  //   if (!transaction) return serviceResponse(false, "Transaction not found");
 
-    const transaction = await TransactionModel.findOne({ reference });
-    if (!transaction) return serviceResponse(false, "Transaction not found");
+  //   if (transaction.status === TransactionStatus.SUCCESS) {
+  //     return serviceResponse(false, "Transaction already verified");
+  //   }
 
-    if (transaction.status === TransactionStatus.SUCCESS) {
-      return serviceResponse(false, "Transaction already verified");
-    }
+  //   // Verify with Paystack
+  //   transaction.status = TransactionStatus.SUCCESS;
+  //   await transaction.save();
 
-    // Verify with Paystack (you'd implement this)
-    // For demo, mark as success
-    transaction.status = TransactionStatus.SUCCESS;
-    await transaction.save();
+  //   // Update wallet balance
+  //   const wallet = await WalletModel.findOne({ userId: transaction.userId });
+  //   if (wallet) {
+  //     wallet.balance += transaction.amount;
+  //     await wallet.save();
+  //   }
 
-    // Update wallet balance
-    const wallet = await WalletModel.findOne({ userId: transaction.userId });
-    if (wallet) {
-      wallet.balance += transaction.amount;
-      await wallet.save();
-    }
-
-    return serviceResponse(true, 'Funding verified', transaction);
-  }
+  //   return serviceResponse(true, 'Funding verified', transaction);
+  // }
 
   async credit(userId: string, amount: number, reference: string, metadata?: any) {
+    // ✅ Get the actual wallet document
     const wallet = await this.getOrCreateWallet(userId);
 
     const transaction = await TransactionModel.create({
@@ -89,6 +86,7 @@ export class WalletService {
   }
 
   async debit(userId: string, amount: number, reference: string, metadata?: any) {
+    // ✅ Get the actual wallet document
     const wallet = await this.getOrCreateWallet(userId);
 
     if (wallet.balance < amount) {
@@ -109,17 +107,17 @@ export class WalletService {
     wallet.balance -= amount;
     await wallet.save();
 
-    return serviceResponse(true, 'Debit succcessful', transaction);
+    return serviceResponse(true, 'Debit successful', transaction);
   }
 
   async withdraw(userId: string, amount: number, bankDetails: any) {
+    // ✅ Get the actual wallet document
     const wallet = await this.getOrCreateWallet(userId);
 
     if (wallet.balance < amount) {
       return serviceResponse(false, "Insufficient balance");
     }
 
-    // Create pending withdrawal transaction
     const transaction = await TransactionModel.create({
       walletId: wallet._id,
       userId,
@@ -135,9 +133,7 @@ export class WalletService {
     wallet.pendingBalance += amount;
     await wallet.save();
 
-    // TODO: Initiate actual bank transfer via Paystack Transfer API
-
-    return serviceResponse(true, 'Withdrawal successful', transaction);
+    return serviceResponse(true, 'Withdrawal initiated', transaction);
   }
 
   async getTransactions(userId: string, page: number = 1, limit: number = 20) {
@@ -148,7 +144,7 @@ export class WalletService {
 
     const total = await TransactionModel.countDocuments({ userId });
 
-    return serviceResponse(true, 'Transaction fetched', {
+    return serviceResponse(true, 'Transactions fetched', {
       data: transactions,
       total,
       page,
@@ -156,6 +152,7 @@ export class WalletService {
     });
   }
 
+  // ✅ FIX: Return the wallet document directly, not serviceResponse
   private async getOrCreateWallet(userId: string) {
     let wallet = await WalletModel.findOne({ userId });
 
@@ -163,6 +160,7 @@ export class WalletService {
       wallet = await WalletModel.create({ userId, balance: 0, pendingBalance: 0 });
     }
 
-    return serviceResponse(true, 'Wallet fetched', wallet);
+    // ✅ Return the wallet document directly
+    return wallet;
   }
 }
