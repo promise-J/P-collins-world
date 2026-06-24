@@ -74,7 +74,7 @@ export class PaymentWebhookController {
   private async handleChargeSuccess(data: any) {
     const { reference, metadata, amount } = data;
 
-    console.log(`✅ Charge successful: ${reference}`);
+    console.log(`✅ Charge successful: ${reference}`, {metadata, amount});
 
     // Check if this is an order payment
     if (metadata?.orderId) {
