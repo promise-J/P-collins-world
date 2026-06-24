@@ -13,62 +13,63 @@ interface AuthenticatedWebhookRequest extends Request {
 
 export class PaymentWebhookController {
   // Main Webhook entry point
-  handleWebhook = async (req: AuthenticatedWebhookRequest, res: Response) => {
+  handleWebhook = async (req: Request, res: Response) => {
     try {
       const secret = process.env.PAYSTACK_SECRET_KEY;
       const signature = req.headers["x-paystack-signature"];
-
-      // 1. Guard against missing middleware rawBody capture
-      const rawBody = req.rawBody;
-      if (!rawBody) {
-        console.error("❌ Webhook error: req.rawBody is missing. Ensure your express.json() config includes a verify fallback.");
-        return res.status(500).json({ success: false, message: "Server configuration missing raw body parser." });
+  
+      // 1. Guard check: ensure express.raw() captured the stream
+      if (!req.body || Object.keys(req.body).length === 0) {
+        console.error("❌ Webhook error: Empty request body received.");
+        return res.status(400).json({ success: false, message: "Empty body" });
       }
-
-      // 2. Validate cryptographic signature matching Paystack guidelines
+  
+      // 2. Validate cryptographic signature using req.body (which is now your Buffer)
       const hash = crypto
         .createHmac("sha512", secret!)
-        .update(rawBody)
+        .update(req.body) // 👈 Changed from rawBody to req.body
         .digest("hex");
-
+  
       if (hash !== signature) {
+        console.warn("⚠️ Webhook unauthorized: Invalid signature mismatch.");
         return res.status(401).send("Unauthorized: Invalid signature");
       }
-
-      // 3. Extract the body data directly since express.json() already formatted it
-      const event = req.body;
+  
+      // 3. Manually parse the buffer into an object since express.json() was bypassed
+      const event = JSON.parse(req.body.toString()); 
       if (!event?.event || !event?.data) return res.sendStatus(200);
-
+  
       console.log("Paystack Webhook Event:", event.event);
-
-      // 4. Delegate to appropriate event hander routines
+  
+      // 4. Delegate to appropriate event handler routines
       switch (event.event) {
         case "charge.success":
           await this.handleChargeSuccess(event.data);
           break;
-
+  
         case "charge.failed":
           await this.handleChargeFailed(event.data);
           break;
-
+  
         case "transfer.success":
           await this.handleTransferSuccess(event.data);
           break;
-
+  
         case "transfer.failed":
           await this.handleTransferFailed(event.data);
           break;
-
+  
         default:
           console.log("Unhandled webhook event:", event.event);
       }
-
+  
       return res.status(200).json({ success: true });
     } catch (error: any) {
       console.error("Webhook error:", error);
       return res.status(500).json({ success: false, message: error.message });
     }
   };
+  
 
   private async handleChargeSuccess(data: any) {
     const { reference, metadata, amount } = data;
