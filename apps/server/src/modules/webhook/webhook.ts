@@ -5,6 +5,7 @@ import { OrderModel, OrderStatus } from "../market/orders/order.model";
 import { ProductModel } from "../market/products/product.model";
 import { TransactionModel, TransactionStatus, TransactionType } from "../wallet/transaction.model";
 import { WalletModel } from "../wallet/wallet.model";
+import { Types } from "mongoose";
 
 const walletService = new WalletService();
 
@@ -80,10 +81,11 @@ export class PaymentWebhookController {
       
         if ((metadata?.fundWallet === true || metadata?.fundWallet === 'true') && metadata?.userId) {
             try {
-            console.log(`🔍 Looking for transaction with reference: ${reference}`);
+            const userObjectId = new Types.ObjectId(metadata.userId);
+
             let transaction = await TransactionModel.findOne({ 
               reference: reference,
-              userId: metadata.userId,
+              userId: userObjectId,
               type: TransactionType.CREDIT,
               status: TransactionStatus.PENDING,
             });
@@ -91,11 +93,11 @@ export class PaymentWebhookController {
             if (!transaction) {
               transaction = await TransactionModel.findOne({ 
                 reference: metadata.reference || reference,
-                userId: metadata.userId,
+                userId: userObjectId,
               });
             }
 
-            const wallet = await WalletModel.findOne({ userId: metadata.userId });
+            const wallet = await WalletModel.findOne({ userId: userObjectId });
             if (wallet) {
               wallet.balance += amount / 100;
               await wallet.save();
