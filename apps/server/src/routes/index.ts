@@ -1,7 +1,7 @@
 import { Router } from "express";
 import authRoutes from "../modules/auth/auth.routes";
 import userRoutes from "../modules/users/user.routes";
-import adminRoutes from "../modules/admin/admin.routes";
+import adminRoutes from "../modules/admin/routes/admin.routes";
 import kycRoutes from "../modules/kyc/kyc.routes";
 import cartRoutes from "../modules/market/cart/cart.routes";
 import orderRoutes from "../modules/market/orders/order.routes";
@@ -22,6 +22,8 @@ import settingsRoutes from "../modules/users/user-settings/user-settings.routes"
 import wishlistRoutes from "../modules/wishlist/wishlist.routes"
 import paymentRoutes from "../modules/payments/payment.routes"
 import locationRoutes from "../modules/admin/location/location.routes"
+import adminOrderRoutes from "../modules/admin/routes/admin-order.routes"
+
 
 const router = Router();
 
@@ -48,5 +50,7 @@ router.use("/settings", settingsRoutes);
 router.use("/wishlist", wishlistRoutes);
 router.use("/payments", paymentRoutes);
 router.use("/locations", locationRoutes);
+router.use("/admin/orders", adminOrderRoutes);
+
 
 export default router;

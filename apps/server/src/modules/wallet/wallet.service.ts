@@ -37,25 +37,11 @@ export class WalletService {
     if (!payment.success) {
       return serviceResponse(false, payment.message || "Failed to initialize payment");
     }
-  
-    // Create pending transaction
-    const transaction = await TransactionModel.create({
-      userId,
-      type: TransactionType.CREDIT,
-      amount,
-      reference: payment.data.reference,
-      status: TransactionStatus.PENDING,
-      metadata: { 
-        accessCode: payment.data.access_code,
-        authorizationUrl: payment.data.authorization_url,
-        initiatedAt: new Date().toISOString(),
-      }
-    });
+
   
     return serviceResponse(true, 'Payment initialized successfully', {
       authorizationUrl: payment.data.authorization_url,
       reference: payment.data.reference,
-      transactionId: transaction._id,
     });
   }
 

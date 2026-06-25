@@ -1,8 +1,8 @@
+import { UserModel } from "@/modules/users/user.model";
+import { apiResponse } from "@/utils/apiResponse";
 import { Request, Response } from "express";
+import { AdminService } from "../services/admin.service";
 
-import { AdminService } from "./admin.service";
-import { apiResponse } from "../../utils/apiResponse";
-import { UserModel } from "../users/user.model";
 
 export class AdminController {
   private service = new AdminService();
