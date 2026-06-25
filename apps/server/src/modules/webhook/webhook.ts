@@ -94,18 +94,38 @@ export class PaymentWebhookController {
           type: TransactionType.CREDIT,
           status: TransactionStatus.PENDING,
         };
-        console.log(transactionFilter,'filter one')
-        let transaction = await TransactionModel.findOne(transactionFilter);
 
-        if (!transaction) {
-          transactionFilter = {
-            reference: metadata.reference || reference,
-            userId: userObjectId,
+        let transaction = null
+
+        // if (!transaction) {
+        //   transactionFilter = {
+        //     reference: metadata.reference || reference,
+        //     userId: userObjectId,
+        //   }
+
+        //   transaction = await TransactionModel.findOne(transactionFilter);
+        // }
+
+        for (let attempt = 1; attempt <= 3; attempt++) {
+            transaction = await TransactionModel.findOne(transactionFilter);
+              
+            if (!transaction) {
+              transaction = await TransactionModel.findOne({ 
+                reference: metadata.reference || reference,
+                userId: userObjectId,
+              });
+            }
+          
+            if (transaction) {
+              console.log(`✨ Transaction found on attempt #${attempt}`);
+              break;
+            }
+          
+            if (attempt < 3) {
+              console.log(`⚠️ Attempt #${attempt} failed. Database might be busy. Retrying in 500ms...`);
+              await new Promise((resolve) => setTimeout(resolve, 500));
+            }
           }
-        console.log(transactionFilter,'filter two')
-
-          transaction = await TransactionModel.findOne(transactionFilter);
-        }
 
         const wallet = await WalletModel.findOne({ userId: userObjectId });
         if (wallet) {
