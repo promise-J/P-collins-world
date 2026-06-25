@@ -22,9 +22,22 @@ export class WalletService {
 
   async initializeFunding(userId: string, email: string, amount: number) {
     if (amount < 100) return serviceResponse(false, "Minimum funding amount is ₦100");
-
-    const payment = await this.paystack.initializePayment(email, amount);
-
+  
+    const payment = await this.paystack.initializePayment(
+      email, 
+      amount,
+      {
+        fundWallet: true,
+        userId: userId,
+        amount: amount,
+        timestamp: new Date().toISOString(),
+      }
+    );
+  
+    if (!payment.success) {
+      return serviceResponse(false, payment.message || "Failed to initialize payment");
+    }
+  
     // Create pending transaction
     const transaction = await TransactionModel.create({
       userId,
@@ -32,13 +45,16 @@ export class WalletService {
       amount,
       reference: payment.data.reference,
       status: TransactionStatus.PENDING,
-      metadata: { accessCode: payment.data.access_code }
+      metadata: { 
+        accessCode: payment.data.access_code,
+        authorizationUrl: payment.data.authorization_url,
+      }
     });
-
-    return serviceResponse(true, 'Attempt to fund successful', {
+  
+    return serviceResponse(true, 'Payment initialized successfully', {
       authorizationUrl: payment.data.authorization_url,
       reference: payment.data.reference,
-      transactionId: transaction._id
+      transactionId: transaction._id,
     });
   }
 
