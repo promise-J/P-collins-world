@@ -73,7 +73,12 @@ const orderSchema = new mongoose.Schema(
       type: Number,
       default: 3,
     },
+    adminNotes: {
+      type: String
+    },
     paidAt: Date,
+    shippedAt: Date,
+    deliveredAt: Date,
     cancellationReason: String,
     trackingNumber: String,
     deliveryNotes: String,

@@ -88,75 +88,20 @@ export class PaymentWebhookController {
       try {
         const userObjectId = new Types.ObjectId(metadata.userId);
 
-        let transactionFilter: any = {
-          reference: reference,
-          userId: userObjectId,
-          type: TransactionType.CREDIT,
-          status: TransactionStatus.PENDING,
-        };
-
-        let transaction = null
-
-        // if (!transaction) {
-        //   transactionFilter = {
-        //     reference: metadata.reference || reference,
-        //     userId: userObjectId,
-        //   }
-
-        //   transaction = await TransactionModel.findOne(transactionFilter);
-        // }
-
-        for (let attempt = 1; attempt <= 3; attempt++) {
-            transaction = await TransactionModel.findOne(transactionFilter);
-              
-            if (!transaction) {
-              transaction = await TransactionModel.findOne({ 
-                reference: metadata.reference || reference,
-                userId: userObjectId,
-              });
-            }
-          
-            if (transaction) {
-              console.log(`✨ Transaction found on attempt #${attempt}`);
-              break;
-            }
-          
-            if (attempt < 3) {
-              console.log(`⚠️ Attempt #${attempt} failed. Database might be busy. Retrying in 500ms...`);
-              await new Promise((resolve) => setTimeout(resolve, 500));
-            }
-          }
-
         const wallet = await WalletModel.findOne({ userId: userObjectId });
         if (wallet) {
           wallet.balance += amount / 100;
           await wallet.save();
-          console.log(`✅ Wallet updated: ₦${wallet.balance}`);
         } else {
           const newWallet = await WalletModel.create({
             userId: metadata.userId,
             balance: amount / 100,
             pendingBalance: 0,
           });
-          console.log(`✅ New wallet created: ₦${newWallet.balance}`);
         }
-        console.log({ transaction });
 
-        if (transaction) {
-          transaction.status = TransactionStatus.SUCCESS;
-          transaction.metadata = {
-            ...transaction.metadata,
-            paidAt: new Date().toISOString(),
-            paymentReference: reference,
-            webhookReceived: true,
-          };
-          await transaction.save();
-          console.log(`✅ Transaction ${transaction._id} updated to SUCCESS`);
-        } else {
-          console.warn(
-            `⚠️ Transaction not found for reference: ${reference}, creating new one`
-          );
-          transaction = await TransactionModel.create({
+
+          const transaction = await TransactionModel.create({
             walletId: wallet?._id,
             userId: metadata.userId,
             type: TransactionType.CREDIT,
@@ -168,7 +113,6 @@ export class PaymentWebhookController {
               paidAt: new Date().toISOString(),
             },
           });
-        }
       } catch (error) {
         console.error(
           `❌ Failed to process wallet funding for user ${metadata.userId}:`,

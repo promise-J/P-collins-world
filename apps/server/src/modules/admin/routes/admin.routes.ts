@@ -1,13 +1,13 @@
 import {Router} from "express";
 
 
-import { AdminController } from "./admin.controller";
+import { AdminController } from "../controllers/admin.controller";
 import { asyncHandler } from "@/utils/asyncHandler";
 import { authenticate } from "@/modules/middleware/auth.middleware";
 import { authorize } from "@/modules/middleware/role.middleware";
 import { UserRole } from "@/enum/role.enum";
-import { validate } from "../middleware/validate.middleware";
-import { loginSchema } from "./admin.validation";
+import { validate } from "../../middleware/validate.middleware";
+import { loginSchema } from "../admin.validation";
 
 const router = Router();
 
