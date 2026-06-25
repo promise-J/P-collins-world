@@ -78,8 +78,8 @@ export class PaymentWebhookController {
           metadata,
         });
       
-        if (metadata?.fundWallet === true && metadata?.userId) {
-          try {
+        if ((metadata?.fundWallet === true || metadata?.fundWallet === 'true') && metadata?.userId) {
+            try {
             console.log(`🔍 Looking for transaction with reference: ${reference}`);
             let transaction = await TransactionModel.findOne({ 
               reference: reference,
