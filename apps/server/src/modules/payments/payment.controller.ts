@@ -4,14 +4,12 @@ import { PaymentService } from "./payment.service";
 import { OrderService } from "../market/orders/order.service";
 import { apiResponse } from "../../utils/apiResponse";
 import { WalletService } from "../wallet/wallet.service";
-import { OrderModel, OrderStatus } from "../market/orders/order.model";
-import { ProductModel } from "../market/products/product.model";
 const paymentService = new PaymentService();
 const orderService = new OrderService();
 const walletService = new WalletService();
 
 export class PaymentController {
-  // Initialize payment
+
   initializePayment = async (req: any, res: Response) => {
     try {
       const { email, amount, metadata } = req.body;
