@@ -42,11 +42,11 @@ export class AuthService {
       verifiedLandlord: role === UserRole.LANDLORD ? false : undefined,
     });
 
-    await WalletModel.create({
-      userId: user._id,
-      balance: 0,
-      pendingBalance: 0,
-    });
+    // await WalletModel.create({
+    //   userId: user._id,
+    //   balance: 0,
+    //   pendingBalance: 0,
+    // });
 
     const verificationLink = `${process.env.WEB_URL}/verify-email/${verificationToken}`;
 

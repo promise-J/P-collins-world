@@ -3,7 +3,8 @@ import { Request, Response } from "express";
 import { WalletService } from "../wallet/wallet.service";
 import { OrderModel, OrderStatus } from "../market/orders/order.model";
 import { ProductModel } from "../market/products/product.model";
-import { TransactionModel, TransactionStatus } from "../wallet/transaction.model";
+import { TransactionModel, TransactionStatus, TransactionType } from "../wallet/transaction.model";
+import { WalletModel } from "../wallet/wallet.model";
 
 const walletService = new WalletService();
 
@@ -71,61 +72,99 @@ export class PaymentWebhookController {
 
       private async handleChargeSuccess(data: any) {
         const { reference, metadata, amount } = data;
-    
+      
         console.log(`✅ Charge successful: ${reference}`, {
           amount: amount / 100,
           metadata,
         });
-    
-        // ✅ Handle wallet funding (from initializeFunding)
+      
         if (metadata?.fundWallet === true && metadata?.userId) {
           try {
-            // Credit the user's wallet
-            await walletService.credit(
-              metadata.userId,
-              amount / 100, // Convert from kobo to Naira
-              `WALLET_FUND_${reference}`,
-              {
+            let transaction = await TransactionModel.findOne({ 
+              reference: reference,
+              userId: metadata.userId,
+              type: TransactionType.CREDIT,
+              status: TransactionStatus.PENDING,
+            });
+      
+            if (!transaction) {
+              transaction = await TransactionModel.findOne({ 
+                reference: metadata.reference || reference,
+                userId: metadata.userId,
+              });
+            }
+
+            const wallet = await WalletModel.findOne({ userId: metadata.userId });
+            if (wallet) {
+              wallet.balance += amount / 100;
+              await wallet.save();
+              console.log(`✅ Wallet updated: ₦${wallet.balance}`);
+            } else {
+              const newWallet = await WalletModel.create({
+                userId: metadata.userId,
+                balance: amount / 100,
+                pendingBalance: 0,
+              });
+              console.log(`✅ New wallet created: ₦${newWallet.balance}`);
+            }
+      
+            if (transaction) {
+              transaction.status = TransactionStatus.SUCCESS;
+              transaction.metadata = {
+                ...transaction.metadata,
+                paidAt: new Date().toISOString(),
                 paymentReference: reference,
-                paymentMethod: "paystack",
-                previousBalance: 0, // Optional: track previous balance
-              }
-            );
-            console.log(`✅ Wallet funded for user ${metadata.userId}: ₦${amount / 100}`);
+                webhookReceived: true,
+              };
+              await transaction.save();
+              console.log(`✅ Transaction ${transaction._id} updated to SUCCESS`);
+            } else {
+              console.warn(`⚠️ Transaction not found for reference: ${reference}, creating new one`);
+              transaction = await TransactionModel.create({
+                walletId: wallet?._id,
+                userId: metadata.userId,
+                type: TransactionType.CREDIT,
+                amount: amount / 100,
+                reference: `WALLET_FUND_${reference}`,
+                status: TransactionStatus.SUCCESS,
+                metadata: {
+                  originalReference: reference,
+                  paidAt: new Date().toISOString(),
+                }
+              });
+            }
+      
+      
           } catch (error) {
-            console.error(`❌ Failed to fund wallet for user ${metadata.userId}:`, error);
-            // Don't throw - we want to acknowledge the webhook even if wallet funding fails
-            // The transaction record will help us identify and fix the issue
+            console.error(`❌ Failed to process wallet funding for user ${metadata.userId}:`, error);
           }
           return;
         }
-    
-        // ✅ Handle order payment
+      
         if (metadata?.orderId) {
           const order = await OrderModel.findById(metadata.orderId);
           if (!order) {
             console.log(`❌ Order not found: ${metadata.orderId}`);
             return;
           }
-    
+      
           if (order.status === OrderStatus.PAID) {
             console.log(`⚠️ Order ${metadata.orderId} already paid`);
             return;
           }
-    
-          // Update order status
+      
           order.status = OrderStatus.PAID;
           order.paymentReference = reference;
           order.paidAt = new Date();
           await order.save();
-    
+      
           // Update product stock
           for (const item of order.items) {
             await ProductModel.findByIdAndUpdate(item.productId, {
               $inc: { stock: -item.quantity, salesCount: item.quantity },
             });
           }
-    
+      
           console.log(`✅ Order ${metadata.orderId} marked as paid`);
         }
       }
