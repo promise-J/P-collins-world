@@ -80,6 +80,7 @@ export class PaymentWebhookController {
       
         if (metadata?.fundWallet === true && metadata?.userId) {
           try {
+            console.log(`🔍 Looking for transaction with reference: ${reference}`);
             let transaction = await TransactionModel.findOne({ 
               reference: reference,
               userId: metadata.userId,
@@ -107,6 +108,7 @@ export class PaymentWebhookController {
               });
               console.log(`✅ New wallet created: ₦${newWallet.balance}`);
             }
+            console.log({transaction})
       
             if (transaction) {
               transaction.status = TransactionStatus.SUCCESS;
