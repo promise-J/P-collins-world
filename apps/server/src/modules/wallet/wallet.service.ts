@@ -48,6 +48,7 @@ export class WalletService {
       metadata: { 
         accessCode: payment.data.access_code,
         authorizationUrl: payment.data.authorization_url,
+        initiatedAt: new Date().toISOString(),
       }
     });
   
