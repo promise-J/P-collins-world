@@ -63,9 +63,8 @@ const propertySchema = new mongoose.Schema(
     media:[
       {
        url:String,
-     
        publicId:String,
-     
+       _id: false,
        type:{
         type:String,
         enum:[

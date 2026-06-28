@@ -9,8 +9,6 @@ export class ProductController {
 
   create = async (req: any, res: Response) => {
     try {
-      console.log('📦 Request body:', req.body);
-      console.log('📸 Uploaded files:', req.files);
 
       const uploadedImages = [];
       

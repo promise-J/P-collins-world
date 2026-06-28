@@ -15,12 +15,10 @@ export const upload = multer({
   limits: {
     fileSize: 50 * 1024 * 1024, // 50MB
   },
-  // 2. Add the fileFilter configuration hook
   fileFilter: (req: Request, file: Express.Multer.File, callback: multer.FileFilterCallback) => {
     if (ALLOWED_MIMETYPES.includes(file.mimetype)) {
-      callback(null, true); // File is valid, proceed to controller
+      callback(null, true);
     } else {
-      // Reject file with a custom error message
       callback(new Error("Invalid file type. Only PNG, JPEG, WEBP, MP4, and WEBM are allowed."));
     }
   }

@@ -205,7 +205,7 @@ export class AdminService {
       ];
     }
   
-    const users = UserModel.find(filter)
+    const users = await UserModel.find(filter)
       .skip((page - 1) * limit)
       .limit(limit);
 
@@ -221,7 +221,7 @@ export class AdminService {
 
   }
   async monthlyRevenue() {
-    const result = TransactionModel.aggregate([
+    const result = await TransactionModel.aggregate([
       {
         $match: {
           status: TransactionStatus.SUCCESS

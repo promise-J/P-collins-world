@@ -3,32 +3,40 @@ import { Request, Response } from "express";
 
 import { PropertyService } from "./property.service.js";
 import { apiResponse } from "../../utils/apiResponse.js";
+import { parseFormData } from "@/utils/formDataParser.js";
+import { UserRole } from "@/enum/role.enum.js";
+import { MediaUploadService } from "../services/media-upload.service.js";
 
 export class PropertyController {
   private service = new PropertyService();
 
-  create = async (req: Request, res: Response) => {
+  create = async (req: any, res: Response) => {
     try {
-      const { body, files, user } = req;
-      const fileList = files as Express.Multer.File[];
+      
+      const { user } = req;
+      const files = req.files as Express.Multer.File[];
+      
+      // ✅ Parse form data
+      const parsedData = parseFormData(req.body);
+      
+      // ✅ Upload files to Cloudinary using the helper service
+      const uploadedMedia = await MediaUploadService.uploadMultiple(
+        files,
+        "properties",
+        "image"
+      );
+      
+      // ✅ Add uploaded media to parsed data
+      parsedData.media = uploadedMedia;
+      parsedData.landlordId = user?._id ?? "";
+      parsedData.approvalStatus = "pending";
 
-      const media = fileList?.map((file: any) => ({
-        url: file.path,
-        publicId: file.filename,
-        type: "image"
-      })) || [];
+      const result = await this.service.createProperty(parsedData, user?._id.toString() ?? "");
       
-      const propertyData = {
-        ...body,
-        media,
-        landlordId: user?._id ?? "",
-        approvalStatus: "pending"
-      };
-      
-      const result = await this.service.createProperty(propertyData, user?._id.toString() ?? "");
       return apiResponse(res, result.success, result.message, result.data);
-    } catch (error) {
-      return apiResponse(res, false, "Failed to create property");
+    } catch (error: any) {
+      console.error('❌ Error creating property:', error);
+      return apiResponse(res, false, error.message || "Failed to create property");
     }
   };
 
@@ -56,6 +64,7 @@ export class PropertyController {
     const result = await this.service.updateProperty(
       req.params.id,
       req.user._id,
+      req.user.role,
       req.body
     );
 
