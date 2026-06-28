@@ -8,10 +8,12 @@ import { authorize } from "@/modules/middleware/role.middleware";
 import { UserRole } from "@/enum/role.enum";
 import { validate } from "../../middleware/validate.middleware";
 import { loginSchema } from "../admin.validation";
+import { DisputeController } from "../controllers/dispute.controller";
 
 const router = Router();
 
 const controller = new AdminController();
+const disputeController = new DisputeController();
 
 router.post("/login", validate(loginSchema), asyncHandler(controller.login));
 
@@ -61,6 +63,62 @@ router.get(
     authenticate,
     authorize([UserRole.ADMIN, UserRole.SUPER_ADMIN]),
     asyncHandler(controller.updateUserRole)
+  );
+
+  router.get(
+    "/disputes",
+    authenticate,
+    authorize([UserRole.ADMIN, UserRole.SUPER_ADMIN]),
+    asyncHandler(disputeController.getDisputes)
+  );
+  
+  router.get(
+    "/disputes/stats",
+    authenticate,
+    authorize([UserRole.ADMIN, UserRole.SUPER_ADMIN]),
+    asyncHandler(disputeController.getDisputeStats)
+  );
+  
+  router.get(
+    "/disputes/:id",
+    authenticate,
+    authorize([UserRole.ADMIN, UserRole.SUPER_ADMIN]),
+    asyncHandler(disputeController.getDisputeById)
+  );
+  
+  router.post(
+    "/disputes",
+    authenticate,
+    authorize([UserRole.ADMIN, UserRole.SUPER_ADMIN]),
+    asyncHandler(disputeController.createDispute)
+  );
+  
+  router.patch(
+    "/disputes/:id/resolve",
+    authenticate,
+    authorize([UserRole.ADMIN, UserRole.SUPER_ADMIN]),
+    asyncHandler(disputeController.resolveDispute)
+  );
+  
+  router.patch(
+    "/disputes/:id/escalate",
+    authenticate,
+    authorize([UserRole.ADMIN, UserRole.SUPER_ADMIN]),
+    asyncHandler(disputeController.escalateDispute)
+  );
+  
+  router.patch(
+    "/disputes/:id/close",
+    authenticate,
+    authorize([UserRole.ADMIN, UserRole.SUPER_ADMIN]),
+    asyncHandler(disputeController.closeDispute)
+  );
+  
+  router.patch(
+    "/disputes/:id/priority",
+    authenticate,
+    authorize([UserRole.ADMIN, UserRole.SUPER_ADMIN]),
+    asyncHandler(disputeController.updateDisputePriority)
   );
 
 export default router

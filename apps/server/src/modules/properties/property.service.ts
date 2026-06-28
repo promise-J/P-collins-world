@@ -2,6 +2,8 @@ import { PropertyRepository } from "./property.repository";
 
 import { ApiError } from "../../utils/apiError";
 import { serviceResponse } from "@/utils/apiResponse";
+import { toMongooseObjectId } from "@/utils/helper";
+import { UserRole } from "@/enum/role.enum";
 
 export class PropertyService {
   private repo = new PropertyRepository();
@@ -11,11 +13,13 @@ export class PropertyService {
       ...data,
       landlordId: userId
     });
+    console.log({result})
     return serviceResponse(true, 'Property created', result)
   }
 
   async getProperty(id: string) {
-    const property = await this.repo.findById(id);
+
+    const property = await this.repo.findById(id.toString());
 
     if (!property) {
       return serviceResponse(false, "Property not found");
@@ -61,7 +65,8 @@ export class PropertyService {
   async updateProperty(
     id: string,
     userId: string,
-    data: any
+    userRole: string,
+    data: any,
   ) {
     const property = await this.repo.findById(id);
 
@@ -69,7 +74,7 @@ export class PropertyService {
       return serviceResponse(false, "Property not found");
     }
 
-    if (property?.landlordId?.toString() !== userId) {
+    if (userRole !== UserRole.ADMIN && userRole !== UserRole.SUPER_ADMIN && property?.landlordId?.toString() !== userId) {
       return serviceResponse(false, "Not authorized");
     }
 

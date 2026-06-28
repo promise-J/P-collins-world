@@ -6,21 +6,24 @@ export class UploadService {
   // Explicitly return a Promise containing Cloudinary's api response layout
   async uploadFile(
     file: Express.Multer.File,
-    folder: string
-  ): Promise<UploadApiResponse> { // 👈 Add type here
+    folder: string = "uploads",
+    resourceType: "auto" | "image" | "video" | "raw" = "auto"
+  ): Promise<UploadApiResponse> {
     return new Promise<UploadApiResponse>((resolve, reject) => {
       const stream = cloudinary.uploader.upload_stream(
         {
           folder,
-          resource_type: "auto",
+          resource_type: resourceType,
+          public_id: `${folder}/${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
         },
-        (error: UploadApiErrorResponse | undefined, result: UploadApiResponse | undefined) => {
+        (error, result) => {
           if (error) {
+            console.error('Cloudinary upload error:', error);
             reject(error);
             return;
           }
           if (!result) {
-            reject(new Error("Cloudinary upload returned no result."));
+            reject(new Error("Cloudinary upload returned no result"));
             return;
           }
           resolve(result);
@@ -32,6 +35,14 @@ export class UploadService {
   }
 
   async deleteFile(publicId: string) {
-    return cloudinary.uploader.destroy(publicId);
+    try {
+      const result = await cloudinary.uploader.destroy(publicId);
+      console.log(`🗑️ Deleted from Cloudinary: ${publicId}`);
+      return result;
+    } catch (error) {
+      console.error('Error deleting from Cloudinary:', error);
+      throw error;
+    }
   }
+
 }
