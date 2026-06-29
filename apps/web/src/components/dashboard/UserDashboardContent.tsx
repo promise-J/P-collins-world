@@ -1,8 +1,13 @@
 import { Link } from "react-router-dom";
-import { Card, Button } from "@/ui";
+import { useQuery } from "@tanstack/react-query";
+import { Card, Button, Spinner } from "@/ui";
 import { StatsCard } from "./StatsCard";
 import { QuickActions } from "./QuickActions";
 import { Wallet, ShoppingBag, Building2, Target, Plus } from "lucide-react";
+import { WalletService } from "@/services/wallet.service";
+import { OrderService } from "@/services/order.service";
+import { SavingsService } from "@/services/savings.service";
+import { useAuthStore } from "@/store/auth.store";
 
 interface UserDashboardContentProps {
   properties: any[];
@@ -11,18 +16,53 @@ interface UserDashboardContentProps {
 
 export function UserDashboardContent({
   properties,
+  loading,
 }: UserDashboardContentProps) {
+  const { user } = useAuthStore();
+
+  // Fetch wallet balance
+  const { data: walletData, isLoading: walletLoading } = useQuery({
+    queryKey: ["wallet-balance"],
+    queryFn: () => WalletService.getWallet(),
+    enabled: !!user,
+  });
+
+  // Fetch orders count
+  const { data: ordersData, isLoading: ordersLoading } = useQuery({
+    queryKey: ["orders-count"],
+    queryFn: () => OrderService.getMyOrders({ limit: 1 }),
+    enabled: !!user,
+  });
+
+  // Fetch savings
+  const { data: savingsData, isLoading: savingsLoading } = useQuery({
+    queryKey: ["savings-total"],
+    queryFn: () => SavingsService.getMyPlans(),
+    enabled: !!user,
+  });
+
+  const wallet = walletData?.data?.wallet || walletData?.wallet || { balance: 0 };
+  const balance = wallet.balance || 0;
+  
+  const orders = ordersData?.data?.data || ordersData?.data || [];
+  const activeOrders = orders.filter((order: any) => 
+    order.status === "PENDING" || order.status === "PAID" || order.status === "SHIPPED"
+  ).length;
+
+  const savings = savingsData?.data || [];
+  const totalSavings = savings.reduce((sum: number, plan: any) => sum + (plan.currentAmount || 0), 0);
+
   const stats = [
     {
       label: "Wallet Balance",
-      value: "₦25,000",
+      value: `₦${balance.toLocaleString()}`,
       icon: Wallet,
       color: "bg-green-500",
       link: "/wallet",
     },
     {
       label: "Active Orders",
-      value: "3",
+      value: activeOrders,
       icon: ShoppingBag,
       color: "bg-blue-500",
       link: "/orders",
@@ -35,8 +75,8 @@ export function UserDashboardContent({
       link: "/properties/favorites",
     },
     {
-      label: "Savings",
-      value: "₦0",
+      label: "Total Savings",
+      value: `₦${totalSavings.toLocaleString()}`,
       icon: Target,
       color: "bg-orange-500",
       link: "/savings",
@@ -70,13 +110,39 @@ export function UserDashboardContent({
     },
   ];
 
+  // Show loading state
+  if (walletLoading || ordersLoading || savingsLoading || loading) {
+    return (
+      <div className="space-y-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="animate-pulse">
+              <div className="bg-gray-200 h-24 rounded-xl" />
+            </div>
+          ))}
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          {[1, 2, 3, 4].map((i) => (
+            <div key={i} className="animate-pulse">
+              <div className="bg-gray-200 h-10 rounded-lg" />
+            </div>
+          ))}
+        </div>
+        <div className="animate-pulse">
+          <div className="bg-gray-200 h-48 rounded-xl" />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
+      {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {stats.map((stat) => (
           <StatsCard
             key={stat.label}
-            title={stat.label} 
+            title={stat.label}
             value={stat.value}
             icon={stat.icon as any}
             color={stat.color}
@@ -85,17 +151,18 @@ export function UserDashboardContent({
         ))}
       </div>
 
+      {/* Quick Actions */}
       <QuickActions actions={quickActions} columns={4} />
 
       {/* Recent Properties */}
       <Card className="p-5">
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-lg font-semibold text-[var(--color-brand-text)]">
+          <h2 className="text-lg font-semibold text-brand-text">
             Recent Properties
           </h2>
           <Link
             to="/properties"
-            className="text-sm text-[var(--color-brand-primary)] hover:underline"
+            className="text-sm text-brand-primary hover:underline"
           >
             View All
           </Link>
@@ -121,7 +188,7 @@ export function UserDashboardContent({
                     <p className="font-medium text-sm line-clamp-1">
                       {property.title}
                     </p>
-                    <p className="text-sm font-bold text-[var(--color-brand-primary)]">
+                    <p className="text-sm font-bold text-brand-primary">
                       ₦{property.price?.toLocaleString()}
                     </p>
                   </div>

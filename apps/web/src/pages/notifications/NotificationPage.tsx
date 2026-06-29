@@ -11,14 +11,14 @@ import {
   Info,
   AlertCircle,
   AlertTriangle,
-  X
+  X,
+  RefreshCw
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import toast from "react-hot-toast";
 import Container from "@/ui/components/Container";
 import { Link } from "react-router-dom";
 
-const USE_DUMMY_DATA = true;
 const PAGE_SIZE = 20;
 
 export default function NotificationPage() {
@@ -27,26 +27,21 @@ export default function NotificationPage() {
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const observerRef = useRef<IntersectionObserver | null>(null);
   const lastNotificationRef = useRef<HTMLDivElement | null>(null);
 
   // Fetch notifications with infinite scroll
   const { data, isLoading, refetch } = useQuery({
     queryKey: ["notifications", page],
-    queryFn: () =>
-      USE_DUMMY_DATA
-        ? NotificationService.getDummyNotifications({ page, limit: PAGE_SIZE })
-        : NotificationService.getNotifications({ page, limit: PAGE_SIZE }),
+    queryFn: () => NotificationService.getNotifications({ page, limit: PAGE_SIZE }),
     enabled: true,
   });
 
   // Get unread count
-  const { data: unreadData } = useQuery({
+  const { data: unreadData, refetch: refetchUnread } = useQuery({
     queryKey: ["notifications-unread"],
-    queryFn: () =>
-      USE_DUMMY_DATA
-        ? Promise.resolve({ success: true, data: { count: notifications.filter(n => !n.isRead).length } })
-        : NotificationService.getUnreadCount(),
+    queryFn: () => NotificationService.getUnreadCount(),
     enabled: true,
   });
 
@@ -56,6 +51,10 @@ export default function NotificationPage() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["notifications"] });
       queryClient.invalidateQueries({ queryKey: ["notifications-unread"] });
+      refetchUnread();
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || "Failed to mark notification as read");
     },
   });
 
@@ -66,6 +65,10 @@ export default function NotificationPage() {
       toast.success("All notifications marked as read");
       queryClient.invalidateQueries({ queryKey: ["notifications"] });
       queryClient.invalidateQueries({ queryKey: ["notifications-unread"] });
+      refetchUnread();
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || "Failed to mark all as read");
     },
   });
 
@@ -76,18 +79,35 @@ export default function NotificationPage() {
       toast.success("Notification deleted");
       queryClient.invalidateQueries({ queryKey: ["notifications"] });
       queryClient.invalidateQueries({ queryKey: ["notifications-unread"] });
+      refetchUnread();
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || "Failed to delete notification");
     },
   });
 
-  // Update notifications when data changes
+  // ✅ Update notifications when data changes - handle nested data structure
   useEffect(() => {
-    if (data?.data) {
-      if (page === 1) {
-        setNotifications(data.data);
-      } else {
-        setNotifications(prev => [...prev, ...data.data]);
+    if (data) {
+      // Handle different data structures
+      let notificationList: Notification[] = [];
+      
+      if (data.data && Array.isArray(data.data)) {
+        notificationList = data.data;
+      } else if (data.data?.data && Array.isArray(data.data.data)) {
+        notificationList = data.data.data;
+      } else if (Array.isArray(data)) {
+        notificationList = data;
       }
-      setHasMore(page < (data.totalPages || 1));
+      
+      if (page === 1) {
+        setNotifications(notificationList);
+      } else {
+        setNotifications(prev => [...prev, ...notificationList]);
+      }
+      
+      const totalPages = data.totalPages || data.data?.totalPages || 1;
+      setHasMore(page < totalPages);
     }
   }, [data, page]);
 
@@ -132,11 +152,20 @@ export default function NotificationPage() {
   };
 
   const handleMarkAllAsRead = async () => {
-    if (unreadData?.data?.count === 0) {
+    const unreadCount = unreadData?.data?.count || 0;
+    if (unreadCount === 0) {
       toast.error("No unread notifications");
       return;
     }
     await markAllAsReadMutation.mutateAsync();
+  };
+
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    await refetch();
+    await refetchUnread();
+    setIsRefreshing(false);
+    toast.success("Notifications refreshed");
   };
 
   const getNotificationIcon = (type: string) => {
@@ -166,8 +195,20 @@ export default function NotificationPage() {
     }
   };
 
+  // ✅ Use the fixed groupNotificationsByDate function with proper data
   const groupedNotifications = groupNotificationsByDate(notifications);
   const unreadCount = unreadData?.data?.count || 0;
+
+  // Handle loading state
+  if (isLoading && page === 1) {
+    return (
+      <Container>
+        <div className="flex justify-center py-20">
+          <Spinner size="lg" />
+        </div>
+      </Container>
+    );
+  }
 
   return (
     <Container>
@@ -182,27 +223,37 @@ export default function NotificationPage() {
             <p className="text-gray-500 mt-1">
               Stay updated with your latest activities
             </p>
+            {unreadCount > 0 && (
+              <p className="text-sm text-[var(--color-brand-primary)] mt-1">
+                {unreadCount} unread notification{unreadCount !== 1 ? 's' : ''}
+              </p>
+            )}
           </div>
           
           <div className="flex gap-3">
             {unreadCount > 0 && (
-              <Button onClick={handleMarkAllAsRead} variant="secondary" disabled={markAllAsReadMutation.isPending}>
+              <Button 
+                onClick={handleMarkAllAsRead} 
+                variant="secondary" 
+                disabled={markAllAsReadMutation.isPending}
+              >
                 <CheckCheck size={18} className="mr-2" />
                 Mark all as read ({unreadCount})
               </Button>
             )}
-            <Button onClick={() => refetch()} variant="ghost">
+            <Button 
+              onClick={handleRefresh} 
+              variant="ghost"
+              disabled={isRefreshing}
+            >
+              <RefreshCw size={18} className={`mr-2 ${isRefreshing ? "animate-spin" : ""}`} />
               Refresh
             </Button>
           </div>
         </div>
 
         {/* Notifications List */}
-        {isLoading && page === 1 ? (
-          <div className="flex justify-center py-20">
-            <Spinner size="lg" />
-          </div>
-        ) : Object.keys(groupedNotifications).length === 0 ? (
+        {Object.keys(groupedNotifications).length === 0 ? (
           <div className="text-center py-20 bg-gray-50 rounded-xl">
             <div className="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <Bell size={32} className="text-gray-400" />
@@ -218,7 +269,7 @@ export default function NotificationPage() {
           <div className="space-y-8">
             {Object.entries(groupedNotifications).map(([date, groupNotifications]) => (
               <div key={date}>
-                <h2 className="text-lg font-semibold text-[var(--color-brand-text)] mb-3 pb-2 border-b">
+                <h2 className="text-lg font-semibold text-[var(--color-brand-text)] mb-3 pb-2 border-b border-gray-100">
                   {date}
                 </h2>
                 <div className="space-y-3">
@@ -297,6 +348,7 @@ export default function NotificationPage() {
                               className="flex-shrink-0 p-1 rounded-lg hover:bg-gray-200 transition-colors"
                               title="Mark as read"
                             >
+                              <Circle size={12} className="text-[var(--color-brand-primary)] fill-[var(--color-brand-primary)]" />
                             </button>
                           )}
                         </div>

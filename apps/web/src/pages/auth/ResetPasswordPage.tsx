@@ -1,11 +1,11 @@
 import { useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useAuthStore } from '@/store/auth.store';
 import { AuthCard } from '@/components/auth/AuthCard';
 import { Button } from '@/ui/components/Button';
 import { FormInput } from '@/ui/forms/FormInput';
 import { Spinner } from '@/ui/feedback/Spinner';
-import { Lock, Eye, EyeOff, CheckCircle } from 'lucide-react';
+import { Lock, Eye, EyeOff, CheckCircle, ArrowLeft } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -45,11 +45,7 @@ export default function ResetPasswordPage() {
   });
 
   const onSubmit = async (data: ResetPasswordFormData) => {
-    if (!token) {
-      toast.error('Invalid reset link');
-      return;
-    }
-    
+    if (!token) return;
     clearError();
     const success = await resetPassword(token, data.password);
     
@@ -57,10 +53,8 @@ export default function ResetPasswordPage() {
       setIsSuccess(true);
       toast.success('Password reset successfully!');
       setTimeout(() => {
-        navigate('/login');
+        window.location.href = "/login"
       }, 3000);
-    } else {
-      toast.error(error || 'Failed to reset password');
     }
   };
 
@@ -72,11 +66,14 @@ export default function ResetPasswordPage() {
           subtitle="Your password has been updated"
         >
           <div className="text-center space-y-4">
-            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto">
-              <CheckCircle size={32} className="text-green-600" />
+            <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto">
+              <CheckCircle size={40} className="text-green-600" />
             </div>
             <p className="text-gray-600">
-              You can now sign in with your new password
+              Your password has been successfully reset.
+            </p>
+            <p className="text-sm text-gray-500">
+              You will be redirected to login in a few seconds...
             </p>
             <Button onClick={() => navigate('/login')} className="w-full">
               Go to Sign In
@@ -92,8 +89,20 @@ export default function ResetPasswordPage() {
       <AuthCard
         title="Reset Password"
         subtitle="Create a new password for your account"
+        footer={
+          <Link to="/login" className="text-sm text-[var(--color-brand-primary)] hover:underline">
+            <ArrowLeft size={16} className="inline mr-1" />
+            Back to Sign In
+          </Link>
+        }
       >
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
+          <div className="text-left">
+            <p className="text-sm text-gray-500">
+              Please enter your new password below.
+            </p>
+          </div>
+
           <div className="relative">
             <FormInput
               control={control}
@@ -130,6 +139,12 @@ export default function ResetPasswordPage() {
             >
               {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
             </button>
+          </div>
+
+          <div className="p-3 bg-yellow-50 rounded-lg">
+            <p className="text-xs text-yellow-700">
+              🔒 Password requirements: Minimum 8 characters, containing uppercase, lowercase, and numbers.
+            </p>
           </div>
 
           {error && (

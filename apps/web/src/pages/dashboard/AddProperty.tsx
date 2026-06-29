@@ -101,7 +101,7 @@ export function AddProperty({ userRole, redirectPath }: AddPropertyProps) {
       formDataToSend.append("features[furnished]", String(formData.features.furnished));
       
       images.forEach((image) => {
-        formDataToSend.append("media", image);
+        formDataToSend.append("images", image);
       });
       
       return PropertyService.create(formDataToSend);
@@ -129,8 +129,8 @@ export function AddProperty({ userRole, redirectPath }: AddPropertyProps) {
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <Card>
-        <h2 className="text-xl font-semibold text-[var(--color-brand-text)] mb-6 flex items-center gap-2">
-          <Building2 size={20} className="text-[var(--color-brand-primary)]" />
+        <h2 className="text-xl font-semibold text-brand-text mb-6 flex items-center gap-2">
+          <Building2 size={20} className="text-brand-primary" />
           Property Information
         </h2>
         
@@ -170,7 +170,7 @@ export function AddProperty({ userRole, redirectPath }: AddPropertyProps) {
                 name="type"
                 value={formData.type}
                 onChange={handleInputChange}
-                className="w-full rounded-lg border border-gray-300 p-3 focus:outline-none focus:ring-2 focus:ring-[var(--color-brand-primary)]"
+                className="w-full rounded-lg border border-gray-300 p-3 focus:outline-none focus:ring-2 focus:ring--brand-primary"
               >
                 <option value="APARTMENT">Apartment</option>
                 <option value="HOUSE">House</option>
@@ -184,7 +184,7 @@ export function AddProperty({ userRole, redirectPath }: AddPropertyProps) {
                 name="status"
                 value={formData.status}
                 onChange={handleInputChange}
-                className="w-full rounded-lg border border-gray-300 p-3 focus:outline-none focus:ring-2 focus:ring-[var(--color-brand-primary)]"
+                className="w-full rounded-lg border border-gray-300 p-3 focus:outline-none focus:ring-2 focus:ring-brand-primary"
               >
                 <option value="AVAILABLE">Available</option>
                 <option value="RESERVED">Reserved</option>
@@ -196,8 +196,8 @@ export function AddProperty({ userRole, redirectPath }: AddPropertyProps) {
       </Card>
 
       <Card>
-        <h2 className="text-xl font-semibold text-[var(--color-brand-text)] mb-6 flex items-center gap-2">
-          <MapPin size={20} className="text-[var(--color-brand-primary)]" />
+        <h2 className="text-xl font-semibold text-brand-text mb-6 flex items-center gap-2">
+          <MapPin size={20} className="text-brand-primary" />
           Location
         </h2>
         
@@ -240,7 +240,7 @@ export function AddProperty({ userRole, redirectPath }: AddPropertyProps) {
       </Card>
 
       <Card>
-        <h2 className="text-xl font-semibold text-[var(--color-brand-text)] mb-6 flex items-center gap-2">
+        <h2 className="text-xl font-semibold text-brand-text mb-6 flex items-center gap-2">
           Features
         </h2>
         
@@ -254,7 +254,7 @@ export function AddProperty({ userRole, redirectPath }: AddPropertyProps) {
               onChange={handleFeatureChange}
               placeholder="0"
             />
-            <Bed size={18} className="absolute left-3 top-[42px] text-gray-400" />
+            <Bed size={18} className="absolute left-3 top-10.5 text-gray-400" />
           </div>
           <div className="relative">
             <Input
@@ -265,7 +265,7 @@ export function AddProperty({ userRole, redirectPath }: AddPropertyProps) {
               onChange={handleFeatureChange}
               placeholder="0"
             />
-            <Bath size={18} className="absolute left-3 top-[42px] text-gray-400" />
+            <Bath size={18} className="absolute left-3 top-10.5 text-gray-400" />
           </div>
           <div className="relative">
             <Input
@@ -276,11 +276,11 @@ export function AddProperty({ userRole, redirectPath }: AddPropertyProps) {
               onChange={handleFeatureChange}
               placeholder="0"
             />
-            <Toilet size={18} className="absolute left-3 top-[42px] text-gray-400" />
+            <Toilet size={18} className="absolute left-3 top-10.5 text-gray-400" />
           </div>
           <label className="flex items-center justify-between p-4 border rounded-lg cursor-pointer hover:bg-gray-50">
             <div className="flex items-center gap-2">
-              <Sofa size={18} className="text-[var(--color-brand-primary)]" />
+              <Sofa size={18} className="text-brand-primary" />
               <span className="text-sm font-medium">Furnished</span>
             </div>
             <input
@@ -290,15 +290,15 @@ export function AddProperty({ userRole, redirectPath }: AddPropertyProps) {
                 ...prev,
                 features: { ...prev.features, furnished: e.target.checked }
               }))}
-              className="w-5 h-5 text-[var(--color-brand-primary)] rounded"
+              className="w-5 h-5 text-brand-primary rounded"
             />
           </label>
         </div>
       </Card>
 
       <Card>
-        <h2 className="text-xl font-semibold text-[var(--color-brand-text)] mb-6 flex items-center gap-2">
-          <ImageIcon size={20} className="text-[var(--color-brand-primary)]" />
+        <h2 className="text-xl font-semibold text-brand-text mb-6 flex items-center gap-2">
+          <ImageIcon size={20} className="text-brand-primary" />
           Property Images
         </h2>
         

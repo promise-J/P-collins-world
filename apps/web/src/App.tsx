@@ -17,7 +17,6 @@ import CheckoutPage from "./pages/products/CheckoutPage";
 import PropertiesPage from "./pages/properties/PropertiesPage";
 import PropertyDetailsPage from "./pages/properties/PropertyDetailsPage";
 import SavingsGoalPage from "./pages/savings/SavingsGoalPage";
-import WalletPage from "./pages/savings/WalletPage";
 import ProfilePage from "./pages/profile/ProfilePage";
 import { ProtectedRoute } from "./ui/guards/ProtectedRoute";
 import HomePage from "./pages/home/HomePage";
@@ -25,13 +24,12 @@ import CheckEmailPage from "./pages/auth/CheckEmailPage";
 import { LoadingScreen } from "./ui/feedback/LoadingScreen";
 import CreatePropertyPage from "./pages/properties/CreateProperty";
 import ComparePropertiesPage from "./pages/properties/ComparePropertyPage";
-import CreateProductPage from "./pages/properties/CreateProductPage";
-import SavingsGroupsPage from "./pages/savings/SavingsGroupsPage";
+import CreateProductPage from "./pages/products/CreateProductPage";
 import PlanDetailsPage from "./pages/savings/PlanDetailsPage";
 import GroupDetailsPage from "./pages/savings/GroupDetailsPage";
 import NotificationPage from "./pages/notifications/NotificationPage";
 import SettingsPage from "./pages/settings/SettingsPage";
-import AgentProperties from "./pages/properties/AgentPropertiesPage";
+import AgentProperties from "./pages/agents/AgentPropertiesPage";
 import AdminUsers from "./pages/admin/AdminUsers";
 import AdminKyc from "./pages/admin/AdminKyc";
 import { RoleGuard } from "./ui";
@@ -57,6 +55,21 @@ import LandlordRentPayments from "./pages/landlords/LandlordRentPayments";
 import LandlordTenants from "./pages/landlords/LandlordTenants";
 import RoleSelectionPage from "./pages/auth/RoleSelectionPage";
 import { ScrollToTop } from "./components/utils/ScrollToTop";
+import GroupSavingsPage from "./pages/savings/GroupSavingsPage";
+import WishlistPage from "./pages/products/WishlistPage";
+import CategoriesPage from "./pages/categories/CategoriesPage";
+import AdminCategories from "./pages/categories/AdminCategories";
+import PaymentVerificationPage from "./pages/payment/PaymentVerificationPage";
+import AdminLocations from "./pages/admin/AdminLocations";
+import FundWalletPage from "./pages/wallet/FundWalletPage";
+import WalletPage from "./pages/wallet/WalletPage";
+import OrdersPage from "./pages/products/OrdersPage";
+import OrderDetailsPage from "./pages/products/OrderDetailsPage";
+import AdminOrders from "./pages/admin/AdminOrdersPage";
+import AdminOrderDetails from "./pages/admin/AdminOrderDetailsPage";
+import AdminPropertyEdit from "./pages/admin/AdminPropertyEdit";
+import AdminProductEdit from "./pages/admin/AdminProductEdit";
+import FavoritesPage from "./pages/properties/FavoritesPage";
 
 function App() {
   const { isAuthenticated, isLoading } = useAuthStore();
@@ -68,7 +81,7 @@ function App() {
 
   return (
     <BrowserRouter>
-    <ScrollToTop />
+      <ScrollToTop />
       <Routes>
         {/* Public Routes - No Auth Required */}
         <Route element={<PublicLayout />}>
@@ -114,6 +127,7 @@ function App() {
           <Route path="/verify-email/:token" element={<VerifyEmailPage />} />
           <Route path="/products" element={<ProductsPage />} />
           <Route path="/products/:id" element={<ProductDetailsPage />} />
+          <Route path="/categories" element={<CategoriesPage />} />
 
           {/* properties */}
           <Route path="/properties" element={<PropertiesPage />} />
@@ -122,6 +136,8 @@ function App() {
             element={<ComparePropertiesPage />}
           />
           <Route path="/properties/:id" element={<PropertyDetailsPage />} />
+          <Route path="/properties/favorites" element={<FavoritesPage />} />
+          <Route path="/payment/verify" element={<PaymentVerificationPage />} />
         </Route>
 
         {/* Protected Routes - User Auth Required */}
@@ -152,6 +168,10 @@ function App() {
               }
             />
             <Route path="/kyc/submit" element={<KYCSubmissionPage />} />
+            <Route path="/wallet" element={<WalletPage />} />
+            <Route path="/orders" element={<OrdersPage />} />
+            <Route path="/orders/:id" element={<OrderDetailsPage />} />
+            <Route path="/wallet/fund" element={<FundWalletPage />} />
             <Route
               path="/properties/create"
               element={
@@ -307,6 +327,15 @@ function App() {
             />
 
             <Route
+              path="/admin/categories"
+              element={
+                <RoleGuard allowedRoles={["ADMIN", "SUPER_ADMIN"]}>
+                  <AdminCategories />
+                </RoleGuard>
+              }
+            />
+
+            <Route
               path="/admin/products"
               element={
                 <RoleGuard allowedRoles={["ADMIN", "SUPER_ADMIN"]}>
@@ -315,10 +344,45 @@ function App() {
               }
             />
             <Route
+              path="/admin/products/create"
+              element={
+                <RoleGuard allowedRoles={["ADMIN", "SUPER_ADMIN"]}>
+                  <CreateProductPage />
+                </RoleGuard>
+              }
+            />
+            <Route
+              path="/admin/products/:id/edit"
+              element={
+                <RoleGuard allowedRoles={["ADMIN", "SUPER_ADMIN"]}>
+                  <AdminProductEdit />
+                </RoleGuard>
+              }
+            />
+            <Route
               path="/admin/properties"
               element={
                 <RoleGuard allowedRoles={["ADMIN", "SUPER_ADMIN"]}>
                   <AdminProperties />
+                </RoleGuard>
+              }
+            />
+            <Route
+              path="/admin/properties/create"
+              element={
+                <RoleGuard allowedRoles={["ADMIN", "SUPER_ADMIN"]}>
+                  <AddProperty
+                    userRole="ADMIN | SUPER_ADMIN"
+                    redirectPath="/admin/properties"
+                  />
+                </RoleGuard>
+              }
+            />
+            <Route
+              path="/admin/properties/:id/edit"
+              element={
+                <RoleGuard allowedRoles={["ADMIN", "SUPER_ADMIN"]}>
+                  <AdminPropertyEdit />
                 </RoleGuard>
               }
             />
@@ -363,13 +427,77 @@ function App() {
               }
             />
 
+            <Route
+              path="/admin/locations"
+              element={
+                <RoleGuard allowedRoles={["ADMIN", "SUPER_ADMIN"]}>
+                  <AdminLocations />
+                </RoleGuard>
+              }
+            />
+
+            <Route
+              path="/admin/orders"
+              element={
+                <RoleGuard allowedRoles={["ADMIN", "SUPER_ADMIN"]}>
+                  <AdminOrders />
+                </RoleGuard>
+              }
+            />
+            <Route
+              path="/admin/orders/:id"
+              element={
+                <RoleGuard allowedRoles={["ADMIN", "SUPER_ADMIN"]}>
+                  <AdminOrderDetails />
+                </RoleGuard>
+              }
+            />
+            {/* Admin ends */}
+
+            <Route
+              path="/savings"
+              element={
+                <RoleGuard allowedRoles={["USER"]}>
+                  <SavingsGoalPage />
+                </RoleGuard>
+              }
+            />
+            <Route
+              path="/savings/groups"
+              element={
+                <RoleGuard allowedRoles={["USER"]}>
+                  <GroupSavingsPage />
+                </RoleGuard>
+              }
+            />
+            <Route
+              path="/savings/groups/:id"
+              element={
+                <RoleGuard allowedRoles={["USER"]}>
+                  <GroupDetailsPage />
+                </RoleGuard>
+              }
+            />
+            <Route
+              path="/savings/plan/:id"
+              element={
+                <RoleGuard allowedRoles={["USER"]}>
+                  <PlanDetailsPage />
+                </RoleGuard>
+              }
+            />
+            <Route
+              path="/savings/groups/:id"
+              element={
+                <RoleGuard allowedRoles={["USER"]}>
+                  <PlanDetailsPage />
+                </RoleGuard>
+              }
+            />
+
             <Route path="/cart" element={<CartPage />} />
             <Route path="/checkout" element={<CheckoutPage />} />
-            <Route path="/savings" element={<SavingsGoalPage />} />
-            <Route path="/savings/groups" element={<SavingsGroupsPage />} />
-            <Route path="/savings/plan/:id" element={<PlanDetailsPage />} />
-            <Route path="/savings/groups/:id" element={<GroupDetailsPage />} />
-            <Route path="/wallet" element={<WalletPage />} />
+            <Route path="/wishlist" element={<WishlistPage />} />
             <Route path="/profile" element={<ProfilePage />} />
             <Route path="/notifications" element={<NotificationPage />} />
             <Route path="/settings" element={<SettingsPage />} />

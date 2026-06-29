@@ -91,6 +91,7 @@ export function ProductDetails() {
 
   const productData = product.data || product;
 
+
   return (
     <div className="container mx-auto px-4 py-8">
       {/* Breadcrumb */}
@@ -208,7 +209,6 @@ export function ProductDetails() {
                   <Spinner size="sm" />
                 ) : (
                   <>
-                    <ShoppingCart size={18} className="mr-2" />
                     Add to Cart
                   </>
                 )}

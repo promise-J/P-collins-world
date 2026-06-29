@@ -2,8 +2,9 @@ import { useState } from 'react';
 import { ChevronLeft, ChevronRight, ZoomIn } from 'lucide-react';
 import { PropertyLightbox } from '../properties/PropertyLightbox';
 
+// 1. Keep the exact object layout you requested
 interface ProductGalleryProps {
-  images: string[];
+  images: { url: string; publicId: string }[];
   title: string;
 }
 
@@ -12,7 +13,10 @@ export function ProductGallery({ images, title }: ProductGalleryProps) {
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxImage, setLightboxImage] = useState('');
 
-  const defaultImages = images?.length > 0 ? images : ['https://via.placeholder.com/600x400?text=No+Image'];
+  // 2. Standardize fallback data into the exact same object shape
+  const defaultImages = images?.length > 0 
+    ? images 
+    : [{ url: 'https://via.placeholder.com/600x400?text=No+Image', publicId: 'placeholder' }];
 
   const handleThumbnailClick = (index: number) => {
     setSelectedIndex(index);
@@ -27,7 +31,8 @@ export function ProductGallery({ images, title }: ProductGalleryProps) {
   };
 
   const openLightbox = () => {
-    setLightboxImage(defaultImages[selectedIndex]);
+    // 3. Extract the '.url' string property before passing it to the Lightbox state
+    setLightboxImage(defaultImages[selectedIndex].url);
     setLightboxOpen(true);
   };
 
@@ -37,7 +42,8 @@ export function ProductGallery({ images, title }: ProductGalleryProps) {
         {/* Main Image */}
         <div className="relative group">
           <img
-            src={defaultImages[selectedIndex]}
+            // 4. Access the image URL string path here
+            src={defaultImages[selectedIndex].url}
             alt={`${title} - Image ${selectedIndex + 1}`}
             className="w-full h-[400px] object-cover rounded-xl cursor-pointer"
             onClick={openLightbox}
@@ -75,14 +81,16 @@ export function ProductGallery({ images, title }: ProductGalleryProps) {
           <div className="flex gap-2 overflow-x-auto pb-2">
             {defaultImages.map((img, index) => (
               <button
-                key={index}
+                // 5. Use publicId as a stable, unique item key instead of index
+                key={img.publicId || index}
                 onClick={() => handleThumbnailClick(index)}
                 className={`flex-shrink-0 w-20 h-20 rounded-lg overflow-hidden border-2 transition-all
                   ${selectedIndex === index ? 'border-[var(--color-brand-primary)]' : 'border-transparent'}
                 `}
               >
                 <img
-                  src={img}
+                  // 6. Access the thumbnail URL string path here
+                  src={img.url}
                   alt={`Thumbnail ${index + 1}`}
                   className="w-full h-full object-cover"
                 />

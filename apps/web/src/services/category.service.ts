@@ -1,4 +1,18 @@
-import { api } from "@/lib/axios";
+import { api } from "../lib/axios";
+
+export interface Category {
+  _id: string;
+  name: string;
+  slug: string;
+  description?: string;
+  image?: string;
+  parentId?: string | Category;
+  isActive: boolean;
+  order: number;
+  children?: Category[];
+  createdAt: string;
+  updatedAt: string;
+}
 
 export class CategoryService {
   static async getAllCategories() {
@@ -11,36 +25,24 @@ export class CategoryService {
     return response.data;
   }
 
-  static async createCategory(payload: {
+  static async createCategory(data: {
     name: string;
     description?: string;
     image?: string;
     parentId?: string;
     order?: number;
   }) {
-    const response = await api.post("/categories", payload);
+    const response = await api.post("/categories", data);
     return response.data;
   }
 
-  static async updateCategory(id: string, payload: any) {
-    const response = await api.patch(`/categories/${id}`, payload);
+  static async updateCategory(id: string, data: Partial<Category>) {
+    const response = await api.patch(`/categories/${id}`, data);
     return response.data;
   }
 
   static async deleteCategory(id: string) {
     const response = await api.delete(`/categories/${id}`);
     return response.data;
-  }
-
-  static async getDummyCategories() {
-    return {
-      success: true,
-      data: [
-        { _id: "cat1", name: "Electronics", slug: "electronics" },
-        { _id: "cat2", name: "Audio", slug: "audio" },
-        { _id: "cat3", name: "Fashion", slug: "fashion" },
-        { _id: "cat4", name: "Home & Kitchen", slug: "home-kitchen" },
-      ],
-    };
   }
 }

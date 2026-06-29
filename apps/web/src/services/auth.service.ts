@@ -45,6 +45,11 @@ export class AuthService {
     return response.data;
   }
 
+  static async verifyResetToken(token: string): Promise<ApiResponse> {
+    const response = await api.get(`/auth/verify-reset-token/${token}`);
+    return response.data;
+  }
+
   static async verifyEmail(token: string): Promise<ApiResponse> {
     const response = await api.get(`/auth/verify-email/${token}`);
     return response.data;

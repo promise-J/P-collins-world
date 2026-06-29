@@ -81,6 +81,7 @@ export default function CreateProductPage() {
       formDataToSend.append("stock", formData.stock);
       formDataToSend.append("status", formData.status);
       
+      // ✅ Append each image with the field name "images"
       images.forEach((image) => {
         formDataToSend.append("images", image);
       });
@@ -89,9 +90,10 @@ export default function CreateProductPage() {
     },
     onSuccess: () => {
       toast.success("Product listed successfully!");
-      navigate("/products");
+      navigate("/admin/products");
     },
     onError: (error: any) => {
+      console.error('Error creating product:', error);
       toast.error(error.response?.data?.message || "Failed to create product");
     },
   });

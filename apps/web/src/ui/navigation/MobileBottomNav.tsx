@@ -1,19 +1,21 @@
 import { Link, useLocation } from "react-router-dom";
 import { Home, Building2, Target, User, ShoppingBag } from "lucide-react";
 import { useCartStore } from "@/store/cart.store";
+import { useAuthStore } from "@/store/auth.store";
 import { motion } from "framer-motion";
 
 export function MobileBottomNav() {
   const location = useLocation();
+  const { user } = useAuthStore();
   const { getTotalItems } = useCartStore();
   const cartCount = getTotalItems();
 
-  const navItems = [
+  const baseNavItems = [
     {
       path: "/dashboard",
       label: "Home",
       icon: Home,
-      active: location.pathname === "/dashboard" || "/",
+      active: location.pathname === "/dashboard" || location.pathname === "/",
     },
     {
       path: "/products",
@@ -42,16 +44,18 @@ export function MobileBottomNav() {
     },
   ];
 
-  // Simulate haptic feedback on click (vibration)
-  const handleClick = () => {
-    if (window.navigator && window.navigator.vibrate) {
-      window.navigator.vibrate(50);
+  const getNavItems = () => {
+    if (user?.role === "AGENT" || user?.role === "LANDLORD") {
+      return baseNavItems;
     }
+    return baseNavItems;
   };
+
+  const navItems = getNavItems();
 
   return (
     <>
-      {/* Spacer to prevent content from hiding behind the nav */}
+      {/* Spacer */}
       <div className="h-16 lg:hidden" />
       
       <motion.nav
@@ -69,7 +73,6 @@ export function MobileBottomNav() {
               <Link
                 key={item.path}
                 to={item.path}
-                onClick={handleClick}
                 className="relative flex flex-col items-center gap-1 group"
               >
                 {/* Icon Container */}
