@@ -22,6 +22,7 @@ interface AuthState {
   verifyEmail: (token: string) => Promise<{ success: boolean; message?: string }>;
   forgotPassword: (email: string) => Promise<{ success: boolean; message?: string }>;
   resetPassword: (token: string, password: string) => Promise<{ success: boolean; message?: string }>;
+  verifyResetToken: (token: string) => Promise<boolean>;
   resendVerification: (email: string) => Promise<{ success: boolean; message?: string }>;
   googleLogin: (data?: any) => Promise<{ success: boolean; message?: string; requiresRoleSelection?: boolean, data?: any }>;
   checkAuth: () => Promise<void>;
@@ -195,6 +196,14 @@ export const useAuthStore = create<AuthState>()(
           const errorMessage = err.response?.data?.message || 'Failed to reset password';
           set({ isLoading: false, error: errorMessage });
           return { success: false, message: errorMessage };
+        }
+      },
+      verifyResetToken: async (token) => {
+        try {
+          const response = await AuthService.verifyResetToken(token);
+          return response.success;
+        } catch {
+          return false;
         }
       },
 

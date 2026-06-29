@@ -118,19 +118,10 @@ export default function AdminLoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-gray-50 to-gray-100">
       <AuthCard
-        title="Welcome Back"
-        subtitle="Sign in to your account"
+        title="Admin Only"
+        subtitle="Sign in as admin"
         footer={
           <div className="space-y-2">
-            <p className="text-sm text-gray-600">
-              Don't have an account?{" "}
-              <Link
-                to="/register"
-                className="text-[var(--color-brand-primary)] hover:underline font-medium"
-              >
-                Create account
-              </Link>
-            </p>
             <p className="text-xs text-gray-500">
               <Link to="/forgot-password" className="hover:underline">
                 Forgot password?

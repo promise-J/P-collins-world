@@ -9,13 +9,11 @@ import {
   Target, 
   Wallet, 
   Clock,
-  AlertCircle,
   Crown,
   Shield,
   User,
   Calendar,
   Lock,
-  TrendingUp
 } from "lucide-react";
 import { GoalProgress } from "@/components/goals/GoalProgress";
 import { GroupContributionModal } from "@/components/groups/GroupContributionModal";
@@ -25,7 +23,7 @@ import Container from "@/ui/components/Container";
 import { useAuthStore } from "@/store/auth.store";
 import { GroupMembers } from "@/components/groups/GroupMembers";
 
-const USE_DUMMY_DATA = true;
+const USE_DUMMY_DATA = false;
 
 export default function GroupDetailsPage() {
   const { id } = useParams();

@@ -4,8 +4,9 @@ import { Request, Response } from "express";
 import { PropertyService } from "./property.service.js";
 import { apiResponse } from "../../utils/apiResponse.js";
 import { parseFormData } from "@/utils/formDataParser.js";
-import { UserRole } from "@/enum/role.enum.js";
 import { MediaUploadService } from "../services/media-upload.service.js";
+import { toMongooseObjectId } from "@/utils/helper.js";
+import { Types } from "mongoose";
 
 export class PropertyController {
   private service = new PropertyService();
@@ -41,7 +42,12 @@ export class PropertyController {
   };
 
   getOne = async (req: Request, res: Response) => {
-    const result = await this.service.getProperty(req.params.id as string);
+    const propertyId = toMongooseObjectId(req.params.id as string ?? "")
+    if(!propertyId && !(new Types.ObjectId(propertyId ?? ""))){
+      return apiResponse(res, false, 'Property id is not found')
+    }
+    const result = await this.service.getProperty(propertyId?.toString() ?? "");
+    console.log({result})
 
     return apiResponse(res, result.success, result.message, result.data);
   };
@@ -69,5 +75,88 @@ export class PropertyController {
     );
 
     return apiResponse(res, result.success, result.message, result.data);
+  };
+
+  delete = async (req: any, res: Response) => {
+    try {
+      const result = await this.service.deleteProperty(req.params.id);
+      return apiResponse(res, result.success, result.message, result.data);
+    } catch (error: any) {
+      return apiResponse(res, false, error.message || "Failed to delete property");
+    }
+  };
+
+  approveProperty = async (req: any, res: Response) => {
+    try {
+      const result = await this.service.approveProperty(req.params.id, req.user?._id);
+      return apiResponse(res, result.success, result.message, result.data);
+    } catch (error: any) {
+      return apiResponse(res, false, error.message || "Failed to approve property");
+    }
+  };
+
+  rejectProperty = async (req: any, res: Response) => {
+    try {
+      const { reason } = req.body;
+      const result = await this.service.rejectProperty(req.params.id, reason, req.user?._id);
+      return apiResponse(res, result.success, result.message, result.data);
+    } catch (error: any) {
+      return apiResponse(res, false, error.message || "Failed to reject property");
+    }
+  };
+
+  getFavorites = async (req: any, res: Response) => {
+    try {
+      const result = await this.service.getFavorites(req.user?._id);
+      return apiResponse(res, result.success, result.message, result.data);
+    } catch (error: any) {
+      return apiResponse(res, false, error.message || "Failed to fetch favorites");
+    }
+  };
+
+  addFavorite = async (req: any, res: Response) => {
+    try {
+      const result = await this.service.addFavorite(req.user?._id, req.params.id);
+      return apiResponse(res, result.success, result.message, result.data);
+    } catch (error: any) {
+      return apiResponse(res, false, error.message || "Failed to add favorite");
+    }
+  };
+
+  removeFavorite = async (req: any, res: Response) => {
+    try {
+      const result = await this.service.removeFavorite(req.user?._id, req.params.id);
+      return apiResponse(res, result.success, result.message, result.data);
+    } catch (error: any) {
+      return apiResponse(res, false, error.message || "Failed to remove favorite");
+    }
+  };
+
+  // Check if property is favorited
+  checkFavorite = async (req: any, res: Response) => {
+    try {
+      const result = await this.service.checkFavorite(req.user?._id, req.params.id);
+      return apiResponse(res, result.success, result.message, result.data);
+    } catch (error: any) {
+      return apiResponse(res, false, error.message || "Failed to check favorite status");
+    }
+  };
+
+  getRecentlyViewed = async (req: any, res: Response) => {
+    try {
+      const result = await this.service.getRecentlyViewed(req.user?._id);
+      return apiResponse(res, result.success, result.message, result.data);
+    } catch (error: any) {
+      return apiResponse(res, false, error.message || "Failed to fetch recently viewed");
+    }
+  };
+
+  recommendations = async (req: any, res: Response) => {
+    try {
+      const result = await this.service.getRecommendations(req.user?._id);
+      return apiResponse(res, result.success, result.message, result.data);
+    } catch (error: any) {
+      return apiResponse(res, false, error.message || "Failed to fetch recommendations");
+    }
   };
 }

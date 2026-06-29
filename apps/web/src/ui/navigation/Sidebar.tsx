@@ -1,27 +1,5 @@
+import { Logo } from "@/components/utils/Logo";
 import { NavLink } from "react-router-dom";
-import { 
-  Home, 
-  Building2, 
-  Wallet, 
-  ShoppingBag, 
-  Bell, 
-  User, 
-  Settings,
-  Shield,
-  Store,
-  Package,
-  BarChart3,
-  Users,
-  FileText,
-  Plus,
-  CreditCard,
-  Star,
-  MessageSquare,
-  Calendar,
-  Briefcase,
-  LogOut,
-  Heart
-} from "lucide-react";
 
 interface SidebarItem {
   label: string;
@@ -37,7 +15,8 @@ export function Sidebar({ items }: SidebarProps) {
   return (
     <aside className="hidden lg:flex h-screen w-72 flex-col border-r border-white/10 bg-[var(--color-brand-text)] text-white sticky left-0 top-0">
       <div className="border-b border-white/10 p-6">
-        <h2 className="text-xl font-bold">P Collins</h2>
+        <Logo variant="icon" size="md" showTagline={false} className="text-white" />
+        <h2 className="text-xl font-bold text-white mt-2">P Collins</h2>
       </div>
       <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
         {items.map((item) => {

@@ -9,7 +9,7 @@ import { CreateSavingsGoalModal } from "@/components/goals/CreateSavingsGoalModa
 import { SavingsGoalCard } from "@/components/goals/SavingsGoalCard";
 
 // Set to true to use dummy data for testing
-const USE_DUMMY_DATA = true;
+const USE_DUMMY_DATA = false;
 
 export default function SavingsGoalPage() {
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -21,6 +21,8 @@ export default function SavingsGoalPage() {
         ? SavingsService.getDummyPlans()
         : SavingsService.getMyPlans(),
   });
+
+  console.log({data})
 
   const plans = data?.data || [];
   const totalSaved = plans.reduce((sum: number, plan: any) => sum + plan.currentAmount, 0);

@@ -1,87 +1,181 @@
 import { useState } from "react";
-import { Card, Button, Badge, Spinner } from "@/ui";
-import { Search, Plus, Edit, Trash2, Eye, Home, CheckCircle, XCircle } from "lucide-react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Card, Button, Badge, Spinner, Pagination } from "@/ui";
+import { Search, Plus, Edit, Trash2, Eye, Home, CheckCircle, XCircle, Filter, X } from "lucide-react";
 import { Link } from "react-router-dom";
 import toast from "react-hot-toast";
-
-const dummyProperties = [
-  {
-    _id: "1",
-    title: "Luxury Apartment in Victoria Island",
-    description: "Beautiful 3-bedroom apartment with ocean view",
-    price: 150000000,
-    location: { address: "123 Ahmadu Bello Way", city: "Lagos", state: "Lagos" },
-    type: "APARTMENT",
-    status: "AVAILABLE",
-    approvalStatus: "approved",
-    landlordId: { firstName: "John", lastName: "Doe" },
-    media: [{ url: "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=400" }],
-    views: 245,
-    createdAt: new Date().toISOString(),
-  },
-  {
-    _id: "2",
-    title: "Modern 4-Bedroom House in Lekki",
-    description: "Spacious family home with swimming pool",
-    price: 250000000,
-    location: { address: "45 Admiralty Way", city: "Lagos", state: "Lagos" },
-    type: "HOUSE",
-    status: "AVAILABLE",
-    approvalStatus: "pending",
-    landlordId: { firstName: "Jane", lastName: "Smith" },
-    media: [{ url: "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?w=400" }],
-    views: 189,
-    createdAt: new Date().toISOString(),
-  },
-  {
-    _id: "3",
-    title: "Commercial Space in Ikeja",
-    description: "Prime commercial space suitable for office",
-    price: 80000000,
-    location: { address: "10 Allen Avenue", city: "Lagos", state: "Lagos" },
-    type: "COMMERCIAL",
-    status: "RESERVED",
-    approvalStatus: "approved",
-    landlordId: { firstName: "Mike", lastName: "Johnson" },
-    media: [{ url: "https://images.unsplash.com/photo-1497366216548-37526070297c?w=400" }],
-    views: 67,
-    createdAt: new Date().toISOString(),
-  },
-];
+import { PropertyService } from "@/services/property.service";
+import { ConfirmationModal } from "@/ui/overlays/ConfirmationModal";
 
 export default function AdminProperties() {
+  const queryClient = useQueryClient();
+  const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
+  const [approvalFilter, setApprovalFilter] = useState("");
+  const [typeFilter, setTypeFilter] = useState("");
+  const [showFilters, setShowFilters] = useState(false);
+  
+  // Confirmation modal states
+  const [confirmationModal, setConfirmationModal] = useState<{
+    open: boolean;
+    title: string;
+    message: string;
+    confirmText?: string;
+    variant?: "danger" | "warning" | "info";
+    onConfirm: () => void;
+    loading?: boolean;
+  }>({
+    open: false,
+    title: "",
+    message: "",
+    onConfirm: () => {},
+  });
+
+  // Fetch properties with real API
+  const { data, isLoading, refetch } = useQuery({
+    queryKey: ["admin-properties", page, search, statusFilter, approvalFilter, typeFilter],
+    queryFn: () =>
+      PropertyService.list({
+        page,
+        limit: 12,
+        search: search || undefined,
+        status: statusFilter || undefined,
+        approvalStatus: approvalFilter || undefined,
+        type: typeFilter || undefined,
+      }),
+  });
+
+  const properties = data?.data?.data || data?.data || [];
+  const totalPages = data?.data?.totalPages || data?.totalPages || 1;
+  const total = data?.data?.total || data?.total || 0;
+
+  // Approve mutation
+  const approveMutation = useMutation({
+    mutationFn: (id: string) => PropertyService.approveProperty(id),
+    onSuccess: () => {
+      toast.success("Property approved successfully");
+      queryClient.invalidateQueries({ queryKey: ["admin-properties"] });
+      setConfirmationModal(prev => ({ ...prev, open: false }));
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || "Failed to approve property");
+      setConfirmationModal(prev => ({ ...prev, open: false }));
+    },
+  });
+
+  // Reject mutation
+  const rejectMutation = useMutation({
+    mutationFn: ({ id, reason }: { id: string; reason?: string }) =>
+      PropertyService.rejectProperty(id, reason),
+    onSuccess: () => {
+      toast.success("Property rejected");
+      queryClient.invalidateQueries({ queryKey: ["admin-properties"] });
+      setConfirmationModal(prev => ({ ...prev, open: false }));
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || "Failed to reject property");
+      setConfirmationModal(prev => ({ ...prev, open: false }));
+    },
+  });
+
+  // Delete mutation
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => PropertyService.delete(id),
+    onSuccess: () => {
+      toast.success("Property deleted successfully");
+      queryClient.invalidateQueries({ queryKey: ["admin-properties"] });
+      setConfirmationModal(prev => ({ ...prev, open: false }));
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || "Failed to delete property");
+      setConfirmationModal(prev => ({ ...prev, open: false }));
+    },
+  });
+
+  // Featured toggle mutation
+  const toggleFeaturedMutation = useMutation({
+    mutationFn: ({ id, featured }: { id: string; featured: boolean }) =>
+      PropertyService.update(id, { isFeatured: featured }),
+    onSuccess: () => {
+      toast.success("Property featured status updated");
+      queryClient.invalidateQueries({ queryKey: ["admin-properties"] });
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || "Failed to update featured status");
+    },
+  });
 
   const handleApprove = (id: string) => {
-    toast.success("Property approved successfully");
+    setConfirmationModal({
+      open: true,
+      title: "Approve Property",
+      message: "Are you sure you want to approve this property? It will become visible to users.",
+      confirmText: "Approve",
+      variant: "info",
+      onConfirm: () => approveMutation.mutate(id),
+    });
   };
 
   const handleReject = (id: string) => {
-    toast.success("Property rejected");
+    setConfirmationModal({
+      open: true,
+      title: "Reject Property",
+      message: "Are you sure you want to reject this property?",
+      confirmText: "Reject",
+      variant: "danger",
+      onConfirm: () => rejectMutation.mutate({ id }),
+    });
   };
 
   const handleDelete = (id: string) => {
-    if (window.confirm("Are you sure you want to delete this property?")) {
-      toast.success("Property deleted successfully");
-    }
+    setConfirmationModal({
+      open: true,
+      title: "Delete Property",
+      message: "Are you sure you want to delete this property? This action cannot be undone.",
+      confirmText: "Delete",
+      variant: "danger",
+      onConfirm: () => deleteMutation.mutate(id),
+    });
   };
 
-  const filteredProperties = dummyProperties.filter(p =>
-    p.title.toLowerCase().includes(search.toLowerCase()) ||
-    p.location.city.toLowerCase().includes(search.toLowerCase())
-  );
+  const handleToggleFeatured = (id: string, currentStatus: boolean) => {
+    toggleFeaturedMutation.mutate({ id, featured: !currentStatus });
+  };
+
+  const clearFilters = () => {
+    setStatusFilter("");
+    setApprovalFilter("");
+    setTypeFilter("");
+    setSearch("");
+    setPage(1);
+  };
+
+  const hasActiveFilters = statusFilter || approvalFilter || typeFilter || search;
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center py-20">
+        <Spinner size="lg" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
+      {/* Header */}
       <div className="flex flex-wrap justify-between items-center gap-4">
         <div>
           <h1 className="text-2xl font-bold text-[var(--color-brand-text)]">Properties</h1>
-          <p className="text-gray-500 mt-1">Manage all properties on the platform</p>
+          <p className="text-gray-500 mt-1">
+            Manage all properties on the platform • {total} total
+          </p>
         </div>
-        <Link to="/properties/create" className="flex items-center">
+        <Link to="/admin/properties/create">
+          <Button>
             <Plus size={18} className="mr-2" />
-            <span className="text-[10px]">Add Property</span>
+            Add Property
+          </Button>
         </Link>
       </div>
 
@@ -97,101 +191,222 @@ export default function AdminProperties() {
             className="w-full pl-10 pr-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-brand-primary)]"
           />
         </div>
-        <select
-          value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
-          className="px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-brand-primary)]"
+
+        <button
+          onClick={() => setShowFilters(!showFilters)}
+          className={`flex items-center gap-2 px-4 py-2 border rounded-lg transition-colors ${
+            showFilters || hasActiveFilters
+              ? "border-[var(--color-brand-primary)] bg-[var(--color-brand-primary)]/5"
+              : "border-gray-200 hover:bg-gray-50"
+          }`}
         >
-          <option value="">All Status</option>
-          <option value="AVAILABLE">Available</option>
-          <option value="RESERVED">Reserved</option>
-          <option value="OCCUPIED">Occupied</option>
-        </select>
-        <select className="px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-brand-primary)]">
-          <option value="">All Approval Status</option>
-          <option value="pending">Pending</option>
-          <option value="approved">Approved</option>
-          <option value="rejected">Rejected</option>
-        </select>
+          <Filter size={18} />
+          <span>Filters</span>
+          {hasActiveFilters && (
+            <Badge variant="primary" className="ml-1">
+              {[statusFilter, approvalFilter, typeFilter].filter(Boolean).length}
+            </Badge>
+          )}
+        </button>
+
+        {hasActiveFilters && (
+          <button
+            onClick={clearFilters}
+            className="text-sm text-[var(--color-brand-primary)] hover:underline flex items-center gap-1"
+          >
+            <X size={14} />
+            Clear filters
+          </button>
+        )}
       </div>
+
+      {/* Filters Panel */}
+      {showFilters && (
+        <Card className="p-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className="w-full rounded-lg border border-gray-300 p-2 focus:outline-none focus:ring-2 focus:ring-[var(--color-brand-primary)]"
+              >
+                <option value="">All Status</option>
+                <option value="AVAILABLE">Available</option>
+                <option value="RESERVED">Reserved</option>
+                <option value="OCCUPIED">Occupied</option>
+                <option value="MAINTENANCE">Maintenance</option>
+                <option value="EXPIRED">Expired</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Approval Status</label>
+              <select
+                value={approvalFilter}
+                onChange={(e) => setApprovalFilter(e.target.value)}
+                className="w-full rounded-lg border border-gray-300 p-2 focus:outline-none focus:ring-2 focus:ring-[var(--color-brand-primary)]"
+              >
+                <option value="">All Approval Status</option>
+                <option value="pending">Pending</option>
+                <option value="approved">Approved</option>
+                <option value="rejected">Rejected</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Property Type</label>
+              <select
+                value={typeFilter}
+                onChange={(e) => setTypeFilter(e.target.value)}
+                className="w-full rounded-lg border border-gray-300 p-2 focus:outline-none focus:ring-2 focus:ring-[var(--color-brand-primary)]"
+              >
+                <option value="">All Types</option>
+                <option value="APARTMENT">Apartment</option>
+                <option value="HOUSE">House</option>
+                <option value="LAND">Land</option>
+                <option value="COMMERCIAL">Commercial</option>
+              </select>
+            </div>
+          </div>
+        </Card>
+      )}
 
       {/* Properties Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredProperties.map((property) => (
-          <Card key={property._id} className="p-4 hover:shadow-md transition-shadow">
-            <div className="relative">
-              <img
-                src={property.media[0]?.url || "https://via.placeholder.com/400x250"}
-                alt={property.title}
-                className="w-full h-48 object-cover rounded-lg"
-              />
-              <div className="absolute top-2 right-2 flex gap-2">
-                {property.approvalStatus === "pending" && (
-                  <Badge variant="warning">Pending</Badge>
-                )}
-                {property.approvalStatus === "approved" && (
-                  <Badge variant="success">Approved</Badge>
-                )}
-                {property.approvalStatus === "rejected" && (
-                  <Badge variant="danger">Rejected</Badge>
-                )}
-              </div>
-            </div>
-            <div className="mt-4">
-              <h3 className="font-semibold text-lg line-clamp-1">{property.title}</h3>
-              <p className="text-sm text-gray-500">{property.location.city}, {property.location.state}</p>
-              <div className="flex justify-between items-center mt-2">
-                <p className="text-xl font-bold text-[var(--color-brand-primary)]">
-                  ₦{property.price.toLocaleString()}
-                </p>
-                <Badge variant={property.status === "AVAILABLE" ? "success" : "warning"}>
-                  {property.status}
-                </Badge>
-              </div>
-              <div className="flex gap-2 mt-4">
-                <Link to={`/properties/${property._id}`} className="flex-1">
-                  <Button variant="ghost" className="w-full">
-                    <Eye size={16} className="mr-1" />
-                    View
-                  </Button>
-                </Link>
-                {property.approvalStatus === "pending" && (
-                  <>
-                    <button
-                      onClick={() => handleApprove(property._id)}
-                      className="p-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors"
-                      title="Approve"
-                    >
-                      <CheckCircle size={16} />
-                    </button>
-                    <button
-                      onClick={() => handleReject(property._id)}
-                      className="p-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
-                      title="Reject"
-                    >
-                      <XCircle size={16} />
-                    </button>
-                  </>
-                )}
-                <button
-                  onClick={() => handleDelete(property._id)}
-                  className="p-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition-colors"
-                  title="Delete"
-                >
-                  <Trash2 size={16} />
-                </button>
-              </div>
-            </div>
-          </Card>
-        ))}
-      </div>
-
-      {filteredProperties.length === 0 && (
-        <div className="text-center py-12">
+      {properties.length === 0 ? (
+        <Card className="text-center py-12">
           <Home size={48} className="mx-auto text-gray-300 mb-3" />
-          <p className="text-gray-500">No properties found</p>
+          <h3 className="text-lg font-semibold text-gray-600">No Properties Found</h3>
+          <p className="text-gray-400 mt-1">
+            {hasActiveFilters ? "Try adjusting your search or filters" : "No properties have been listed yet"}
+          </p>
+          {!hasActiveFilters && (
+            <Link to="/admin/properties/create">
+              <Button className="mt-4">
+                <Plus size={18} className="mr-2" />
+                Add Property
+              </Button>
+            </Link>
+          )}
+        </Card>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {properties.map((property: any) => (
+            <Card key={property._id} className="p-4 hover:shadow-lg transition-shadow">
+              <div className="relative">
+                <img
+                  src={property.media?.[0]?.url || "https://via.placeholder.com/400x250"}
+                  alt={property.title}
+                  className="w-full h-48 object-cover rounded-lg"
+                />
+                <div className="absolute top-2 right-2 flex gap-2">
+                  {property.isFeatured && (
+                    <Badge variant="primary">Featured</Badge>
+                  )}
+                  {property.approvalStatus === "pending" && (
+                    <Badge variant="warning">Pending</Badge>
+                  )}
+                  {property.approvalStatus === "approved" && (
+                    <Badge variant="success">Approved</Badge>
+                  )}
+                  {property.approvalStatus === "rejected" && (
+                    <Badge variant="danger">Rejected</Badge>
+                  )}
+                </div>
+              </div>
+              <div className="mt-4">
+                <h3 className="font-semibold text-lg line-clamp-1">{property.title}</h3>
+                <p className="text-sm text-gray-500">{property.location?.city}, {property.location?.state}</p>
+                <div className="flex justify-between items-center mt-2">
+                  <p className="text-xl font-bold text-[var(--color-brand-primary)]">
+                    ₦{property.price?.toLocaleString()}
+                  </p>
+                  <Badge variant={property.status === "AVAILABLE" ? "success" : "warning"}>
+                    {property.status}
+                  </Badge>
+                </div>
+                <div className="flex flex-wrap gap-2 mt-4">
+                  <Link to={`/properties/${property._id}`} className="flex-1 min-w-[60px]">
+                    <Button variant="ghost" className="w-full" size="sm">
+                      <Eye size={14} className="mr-1" />
+                      View
+                    </Button>
+                  </Link>
+                  <Link to={`/admin/properties/${property._id}/edit`} className="flex-1 min-w-[60px]">
+                    <Button variant="secondary" className="w-full" size="sm">
+                      <Edit size={14} className="mr-1" />
+                      Edit
+                    </Button>
+                  </Link>
+                  {property.approvalStatus === "pending" && (
+                    <>
+                      <button
+                        onClick={() => handleApprove(property._id)}
+                        className="p-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors"
+                        title="Approve"
+                      >
+                        <CheckCircle size={16} />
+                      </button>
+                      <button
+                        onClick={() => handleReject(property._id)}
+                        className="p-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
+                        title="Reject"
+                      >
+                        <XCircle size={16} />
+                      </button>
+                    </>
+                  )}
+                  {property.approvalStatus === "approved" && (
+                    <button
+                      onClick={() => handleToggleFeatured(property._id, property.isFeatured)}
+                      className="p-2 bg-yellow-500 text-white rounded-lg hover:bg-yellow-600 transition-colors"
+                      title={property.isFeatured ? "Remove Featured" : "Make Featured"}
+                    >
+                      {property.isFeatured ? "★" : "☆"}
+                    </button>
+                  )}
+                  <button
+                    onClick={() => handleDelete(property._id)}
+                    className="p-2 bg-red-100 text-red-600 rounded-lg hover:bg-red-200 transition-colors"
+                    title="Delete"
+                  >
+                    <Trash2 size={16} />
+                  </button>
+                </div>
+                <div className="mt-3 pt-3 border-t border-gray-100 flex justify-between text-xs text-gray-400">
+                  <span>Views: {property.views || 0}</span>
+                  <span>Listed: {new Date(property.createdAt).toLocaleDateString()}</span>
+                </div>
+              </div>
+            </Card>
+          ))}
         </div>
       )}
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="mt-8 flex justify-center">
+          <Pagination
+            page={page}
+            totalPages={totalPages}
+            onPageChange={setPage}
+          />
+        </div>
+      )}
+
+      {/* Confirmation Modal */}
+      <ConfirmationModal
+        open={confirmationModal.open}
+        title={confirmationModal.title}
+        message={confirmationModal.message}
+        confirmText={confirmationModal.confirmText || "Confirm"}
+        variant={confirmationModal.variant || "danger"}
+        loading={
+          approveMutation.isPending ||
+          rejectMutation.isPending ||
+          deleteMutation.isPending
+        }
+        onConfirm={confirmationModal.onConfirm}
+        onCancel={() => setConfirmationModal(prev => ({ ...prev, open: false }))}
+      />
     </div>
   );
 }

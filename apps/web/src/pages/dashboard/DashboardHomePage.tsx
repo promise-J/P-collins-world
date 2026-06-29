@@ -11,10 +11,10 @@ import {
 } from "lucide-react";
 import { AdminService } from "@/services/admin.service";
 import { PropertyService } from "@/services/property.service";
-import { AdminDashboardContent } from "@/components/dashboard/AdminDashboardContent";
-import { AgentDashboardContent } from "@/components/dashboard/AgentDashboardContent";
 import { LandlordDashboardContent } from "@/components/dashboard/LandlordDashboardContent";
 import { UserDashboardContent } from "@/components/dashboard/UserDashboardContent";
+import { AgentDashboardContent } from "@/components/dashboard/AgentDashboardContent";
+import { AdminDashboardContent } from "@/components/dashboard/AdminDashboardContent";
 
 export default function DashboardPage() {
   const { user } = useAuthStore();
@@ -44,7 +44,7 @@ export default function DashboardPage() {
   // Loading state
   if (adminLoading || propertiesLoading) {
     return (
-      <div className="flex justify-center items-center min-h-[400px]">
+      <div className="flex justify-center items-center min-h-100">
         <Spinner size="lg" />
       </div>
     );
@@ -56,7 +56,7 @@ export default function DashboardPage() {
       {/* Welcome Section - Common for all roles */}
       <div className="flex flex-wrap justify-between items-center gap-4">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-[var(--color-brand-text)]">
+          <h1 className="text-2xl md:text-3xl font-bold text-brand-text">
             Welcome back, {user?.firstName}!
           </h1>
           <p className="text-gray-500 mt-1">

@@ -18,6 +18,8 @@ import {
   Heart,
   AlertTriangle,
   ToolboxIcon,
+  Layers,
+  MapPin,
 } from "lucide-react";
 
 
@@ -36,6 +38,16 @@ export const USER_MENU = [
     path: "/dashboard",
   },
   {
+    label: "Wallet",
+    icon: Wallet,
+    path: "/wallet",
+  },
+  {
+    label: "Fund Wallet",
+    icon: Wallet,
+    path: "/wallet/fund",
+  },
+  {
     label: "Properties",
     icon: Building2,
     path: "/properties",
@@ -44,6 +56,11 @@ export const USER_MENU = [
     label: "Savings",
     icon: Wallet,
     path: "/savings",
+  },
+  {
+    label: "Group Savings",
+    icon: Users,
+    path: "/savings/groups",
   },
   {
     label: "Marketplace",
@@ -65,6 +82,7 @@ export const USER_MENU = [
 // Real Estate Agent Menu
 export const AGENT_MENU = [
   { label: "Dashboard", icon: Home, path: "/agent/dashboard" },
+  {label: "Wallet",icon: Wallet,path: "/wallet",},
   { label: "Properties", icon: Building2, path: "/agent/properties" },
   { label: "Add Property", icon: Plus, path: "/agent/properties/add" },
   { label: "Inquiries", icon: MessageSquare, path: "/agent/inquiries" },
@@ -78,6 +96,7 @@ export const AGENT_MENU = [
 // Landlord Menu
 export const LANDLORD_MENU = [
   { label: "Dashboard", icon: Home, path: "/landlord/dashboard" },
+  {label: "Wallet",icon: Wallet,path: "/wallet",},
   { label: "My Properties", icon: Building2, path: "/landlord/properties" },
   { label: "Add Property", icon: Plus, path: "/landlord/properties/add" },
   { label: "Tenants", icon: Users, path: "/landlord/tenants" },
@@ -91,12 +110,15 @@ export const LANDLORD_MENU = [
 // Admin Menu
 export const ADMIN_MENU = [
   { label: "Dashboard", icon: Shield, path: "/admin/dashboard" },
+  { label: "Transactions", icon: CreditCard, path: "/admin/transactions" },
+  {label: "Orders",icon: Package,path: "/admin/orders",},
   { label: "Properties", icon: Building2, path: "/admin/properties" },
   { label: "Products", icon: ShoppingBag, path: "/admin/products" },
+  {label: "Categories",icon: Layers,path: "/admin/categories",},
   { label: "Users", icon: Users, path: "/admin/users" },
-  { label: "Transactions", icon: CreditCard, path: "/admin/transactions" },
   { label: "KYC Reviews", icon: Shield, path: "/admin/kyc" },
   { label: "Disputes", icon: AlertTriangle, path: "/admin/disputes" },
+  {label: "Delivery Locations", icon: MapPin, path: "/admin/locations",},
   { label: "Analytics", icon: BarChart3, path: "/admin/analytics" },
   { label: "Audit Logs", icon: FileText, path: "/admin/audit" },
   ...commonMenuItems,

@@ -29,7 +29,7 @@ export function QuickActions({ actions, columns = 4 }: QuickActionsProps) {
         return (
           <Link key={action.path} to={action.path} className="w-full block">
             <Button variant={action.variant || "secondary"} className="w-full">
-              {Icon && <Icon size={16} className="mr-2" />}
+              {/* {Icon && <Icon size={16} className="mr-2" />} */}
               {action.label}
             </Button>
           </Link>

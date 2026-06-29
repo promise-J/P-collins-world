@@ -31,6 +31,7 @@ export function ProductListItem({ product }: any) {
       price: product.price,
       quantity: 1,
       stock: product.stock,
+      images: product.images
     });
 
   };

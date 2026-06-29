@@ -89,7 +89,7 @@ export class AdminService {
   }
 
   // Get audit logs
-  static async getAuditLogs(params?: { page?: number; limit?: number; module?: string }) {
+  static async getAuditLogs(params?: { page?: number; limit?: number; module?: string, search?: string, action?: string }) {
     const response = await api.get("/admin/audit-logs", { params });
     return response.data;
   }

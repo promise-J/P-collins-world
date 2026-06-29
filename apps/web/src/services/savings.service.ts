@@ -56,6 +56,7 @@ export class SavingsService {
   }
 
   // Group Savings
+
   static async createGroup(data: GroupData) {
     const response = await api.post("/savings/group", data);
     return response.data;
@@ -66,24 +67,43 @@ export class SavingsService {
     return response.data;
   }
 
+  static async getAllGroups() {
+    const response = await api.get("/savings/group/all");
+    return response.data;
+  }
+
   static async getGroupDetails(groupId: string) {
     const response = await api.get(`/savings/group/${groupId}`);
     return response.data;
   }
-
 
   static async joinGroup(groupId: string) {
     const response = await api.post(`/savings/group/${groupId}/join`);
     return response.data;
   }
 
-  static async contributeToGroup(groupId: string, amount: number, reference?: string) {
-    const response = await api.post(`/savings/group/${groupId}/contribute`, { amount, reference });
+  static async leaveGroup(groupId: string) {
+    const response = await api.post(`/savings/group/${groupId}/leave`);
+    return response.data;
+  }
+
+  static async contributeToGroup(groupId: string, amount: number) {
+    const response = await api.post(`/savings/group/${groupId}/contribute`, { amount });
     return response.data;
   }
 
   static async breakGroup(groupId: string) {
     const response = await api.post(`/savings/group/${groupId}/break`);
+    return response.data;
+  }
+
+  static async deleteGroup(groupId: string) {
+    const response = await api.delete(`/savings/group/${groupId}`);
+    return response.data;
+  }
+
+  static async updateGroup(groupId: string, data: Partial<GroupData>) {
+    const response = await api.patch(`/savings/group/${groupId}`, data);
     return response.data;
   }
 

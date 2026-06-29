@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 70">
+  <defs>
+    <linearGradient id="premiumGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#8B3A3A;stop-opacity:1" />
+      <stop offset="50%" style="stop-color:#D4A373;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#1A2A4F;stop-opacity:1" />
+    </linearGradient>
+    <linearGradient id="textGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#1A2A4F;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#8B3A3A;stop-opacity:1" />
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="2" stdDeviation="3" flood-opacity="0.15"/>
+    </filter>
+  </defs>
+  <!-- Circle background -->
+  <circle cx="40" cy="35" r="32" fill="url(#premiumGrad)" filter="url(#shadow)"/>
+  <!-- P letter -->
+  <text x="40" y="46" font-family="Georgia, serif" font-size="34" font-weight="700" fill="white" text-anchor="middle">P</text>
+  <!-- Decorative dot -->
+  <circle cx="56" cy="20" r="3" fill="#D4A373"/>
+  <circle cx="24" cy="20" r="3" fill="#D4A373"/>
+  <!-- Company Name -->
+  <text x="85" y="34" font-family="Georgia, serif" font-size="28" font-weight="700" fill="url(#textGrad)" letter-spacing="2">P Collins</text>
+  <!-- Tagline -->
+  <text x="85" y="52" font-family="Arial, sans-serif" font-size="10" fill="#8B3A3A" letter-spacing="4" font-weight="600">MARKETPLACE · SAVINGS · REAL ESTATE</text>
+</svg>

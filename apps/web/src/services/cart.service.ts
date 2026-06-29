@@ -1,5 +1,4 @@
-import { api } from "@/lib/axios";
-
+import { api } from "../lib/axios";
 
 export class CartService {
   static async getCart() {
@@ -31,8 +30,8 @@ export class CartService {
     return response.data;
   }
 
-  static async applyCoupon(code: string) {
-    const response = await api.post("/cart/apply-coupon", { code });
+  static async getCartCount() {
+    const response = await api.get("/cart/count");
     return response.data;
   }
 }

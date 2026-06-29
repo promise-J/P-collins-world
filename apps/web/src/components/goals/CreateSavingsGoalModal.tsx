@@ -22,7 +22,7 @@ export function CreateSavingsGoalModal({ open, onClose, onSuccess }: CreateSavin
   const createMutation = useMutation({
     mutationFn: () => {
       const targetAmountNum = parseFloat(formData.targetAmount);
-      if (isNaN(targetAmountNum) || targetAmountNum < 1000) {
+      if (isNaN(targetAmountNum) || targetAmountNum < 100) {
         throw new Error("Target amount must be at least ₦1,000");
       }
       return SavingsService.createPlan({
@@ -65,7 +65,7 @@ export function CreateSavingsGoalModal({ open, onClose, onSuccess }: CreateSavin
               onChange={(e) => setFormData({ ...formData, targetAmount: e.target.value })}
               placeholder="e.g., 500000"
               required
-              min={1000}
+              min={100}
               label="Target Amount"
             />
             <p className="text-xs text-gray-500 mt-1">Minimum target: ₦1,000</p>
@@ -124,7 +124,7 @@ export function CreateSavingsGoalModal({ open, onClose, onSuccess }: CreateSavin
           <div className="p-3 bg-blue-50 rounded-lg flex items-start gap-2">
             <AlertCircle size={16} className="text-blue-500 mt-0.5" />
             <p className="text-xs text-blue-600">
-              Personal savings have no penalties for breaking. You can withdraw anytime with 10% penalty on interest.
+              Personal savings.
             </p>
           </div>
 
