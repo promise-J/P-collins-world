@@ -38,7 +38,8 @@ const transactionSchema = new mongoose.Schema(
     reference: {
       type: String,
       unique: true,
-      index: true
+      index: true,
+      sparse: true
     },
 
     status: {

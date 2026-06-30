@@ -1,4 +1,4 @@
-import crypto from 'crypto'
+import crypto from "crypto";
 import { Request, Response } from "express";
 import { PaymentService } from "./payment.service";
 import { OrderService } from "../market/orders/order.service";
@@ -9,10 +9,9 @@ const orderService = new OrderService();
 const walletService = new WalletService();
 
 export class PaymentController {
-
   initializePayment = async (req: any, res: Response) => {
     try {
-      const { email, amount, metadata } = req.body;
+      const { email, amount, goalId, goalType, goalName, purpose } = req.body;
 
       if (!email || !amount) {
         return apiResponse(res, false, "Email and amount are required");
@@ -22,10 +21,39 @@ export class PaymentController {
         return apiResponse(res, false, "Minimum payment amount is ₦100");
       }
 
-      const result = await paymentService.initializePayment(email, amount, {
-        ...metadata,
+      // Build metadata based on purpose
+      let metadata: any = {
         userId: req.user?._id,
-      });
+        userEmail: email,
+        timestamp: new Date().toISOString(),
+      };
+
+      // If it's a goal contribution
+      if (goalId) {
+        metadata = {
+          ...metadata,
+          savingsGoalContribution: JSON.stringify({
+            goalId: goalId,
+            goalType: goalType || "individual",
+            goalName: goalName || "",
+            purpose: purpose || "savings_contribution",
+            paymentReference: `PAY_${Date.now()}`,
+          }),
+          goalContribution: true,
+        };
+      } else {
+        metadata = {
+          ...metadata,
+          fundWallet: true,
+          purpose: "wallet_funding",
+        };
+      }
+
+      const result = await paymentService.initializePayment(
+        email,
+        amount,
+        metadata
+      );
 
       if (result.success) {
         return apiResponse(
@@ -108,5 +136,4 @@ export class PaymentController {
       );
     }
   };
-
 }

@@ -1,17 +1,19 @@
 import { useState } from "react";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { SavingsService } from "@/services/savings.service";
+import { WalletService } from "@/services/wallet.service";
 import { Modal, Button, Input, Spinner } from "@/ui";
 import { 
   Wallet, 
   AlertCircle, 
-  Target, 
   TrendingUp,
   ArrowRight,
-  CheckCircle
+  CheckCircle,
+  CreditCard,
+  Building2
 } from "lucide-react";
 import toast from "react-hot-toast";
-import { useAuthStore } from "@/store/auth.store";
+import { PaystackService } from "@/services/paystack.service";
 
 interface GoalContributionModalProps {
   open: boolean;
@@ -23,6 +25,8 @@ interface GoalContributionModalProps {
   onSuccess?: () => void;
 }
 
+type PaymentMethod = "wallet" | "card";
+
 export function GoalContributionModal({
   open,
   goalId,
@@ -32,14 +36,26 @@ export function GoalContributionModal({
   onClose,
   onSuccess,
 }: GoalContributionModalProps) {
-  const { user } = useAuthStore();
+  const queryClient = useQueryClient();
   const [amount, setAmount] = useState("");
   const [step, setStep] = useState<"form" | "success">("form");
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("wallet");
+  const [isRedirecting, setIsRedirecting] = useState(false);
+  
+  // Fetch wallet balance using React Query
+  const { data: walletData, isLoading: isWalletLoading } = useQuery({
+    queryKey: ['wallet-balance'],
+    queryFn: () => WalletService.getWallet(),
+    enabled: open,
+  });
+
+  const walletBalance = walletData?.data?.wallet?.balance || 0;
   
   const remaining = targetAmount - currentAmount;
   const percentage = Math.floor((currentAmount / targetAmount) * 100);
   const newPercentage = Math.floor(((currentAmount + (parseFloat(amount) || 0)) / targetAmount) * 100);
 
+  // Mutation for wallet contribution
   const contributeMutation = useMutation({
     mutationFn: () => {
       const contributionAmount = parseFloat(amount);
@@ -52,14 +68,20 @@ export function GoalContributionModal({
       if (contributionAmount > remaining) {
         throw new Error(`Amount exceeds remaining target of ₦${remaining.toLocaleString()}`);
       }
-      if (contributionAmount > (0 || 0)) {
-        throw new Error(`Insufficient wallet balance. You have ₦${(0 || 0).toLocaleString()}`);
+      if (paymentMethod === "wallet" && contributionAmount > walletBalance) {
+        throw new Error(`Insufficient wallet balance. You have ₦${walletBalance.toLocaleString()}`);
       }
       return SavingsService.contributeToPlan(goalId, { amount: contributionAmount });
     },
     onSuccess: (response) => {
       setStep("success");
       toast.success(`₦${parseFloat(amount).toLocaleString()} contributed successfully!`);
+      
+      // Invalidate relevant queries
+      queryClient.invalidateQueries({ queryKey: ['savings-goals'] });
+      queryClient.invalidateQueries({ queryKey: ['wallet-balance'] });
+      queryClient.invalidateQueries({ queryKey: ['wallet'] });
+      
       setTimeout(() => {
         setStep("form");
         setAmount("");
@@ -72,9 +94,73 @@ export function GoalContributionModal({
     },
   });
 
+  // Mutation for card payment (Paystack)
+  const cardPaymentMutation = useMutation({
+    mutationFn: (amount: number) => {
+      // Use the unified initializePayment method
+      return PaystackService.initializePayment({
+        amount,
+        goalId: goalId,
+        goalType: 'individual',
+        goalName: goalName,
+        purpose: 'savings_contribution',
+      });
+    },
+    onSuccess: (response) => {
+      const { authorization_url, reference } = response.data;
+      
+      // Store reference for verification
+      sessionStorage.setItem('pendingFundingReference', reference);
+      sessionStorage.setItem('pendingGoalContribution', JSON.stringify({
+        goalId,
+        amount: parseFloat(amount),
+        goalName,
+        goalType: 'individual',
+      }));
+      
+      // Redirect to Paystack
+      if (authorization_url) {
+        setIsRedirecting(true);
+        window.location.href = authorization_url;
+      }
+      
+      toast.success('Redirecting to payment page...');
+    },
+    onError: (error: any) => {
+      toast.error(error.response?.data?.message || 'Failed to initialize payment');
+    },
+  });
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    contributeMutation.mutate();
+    const contributionAmount = parseFloat(amount);
+    
+    if (isNaN(contributionAmount) || contributionAmount <= 0) {
+      toast.error("Please enter a valid amount");
+      return;
+    }
+    
+    if (contributionAmount < 100) {
+      toast.error("Minimum contribution amount is ₦100");
+      return;
+    }
+    
+    if (contributionAmount > remaining) {
+      toast.error(`Amount exceeds remaining target of ₦${remaining.toLocaleString()}`);
+      return;
+    }
+
+    if (paymentMethod === "wallet") {
+      // Use wallet balance
+      if (contributionAmount > walletBalance) {
+        toast.error(`Insufficient wallet balance. You have ₦${walletBalance.toLocaleString()}`);
+        return;
+      }
+      contributeMutation.mutate();
+    } else {
+      // Use card payment
+      cardPaymentMutation.mutate(contributionAmount);
+    }
   };
 
   const handleAmountSelect = (selectedAmount: number) => {
@@ -82,6 +168,10 @@ export function GoalContributionModal({
   };
 
   const suggestedAmounts = [1000, 5000, 10000, 25000, 50000];
+
+  // Check if amount is valid for each payment method
+  const isValidAmount = amount && parseFloat(amount) > 0 && parseFloat(amount) <= remaining;
+  const isWalletSufficient = paymentMethod === "wallet" ? parseFloat(amount) <= walletBalance : true;
 
   return (
     <Modal open={open} title={`Contribute to ${goalName}`} onClose={onClose}>
@@ -188,21 +278,85 @@ export function GoalContributionModal({
             </div>
           </div>
 
-          {/* Wallet Balance */}
-          <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-            <div className="flex items-center gap-2">
-              <Wallet size={16} className="text-gray-500" />
-              <span className="text-sm text-gray-600">Wallet Balance</span>
+          {/* Payment Method Selection */}
+          <div>
+            <p className="text-sm font-medium text-gray-700 mb-2">Payment Method</p>
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                type="button"
+                onClick={() => setPaymentMethod("wallet")}
+                className={`p-3 rounded-lg border-2 transition-all ${
+                  paymentMethod === "wallet"
+                    ? "border-[var(--color-brand-primary)] bg-[var(--color-brand-primary)]/5"
+                    : "border-gray-200 hover:border-gray-300"
+                }`}
+              >
+                <div className="flex flex-col items-center gap-1">
+                  <Building2 size={20} className={paymentMethod === "wallet" ? "text-[var(--color-brand-primary)]" : "text-gray-400"} />
+                  <span className={`text-sm font-medium ${paymentMethod === "wallet" ? "text-[var(--color-brand-primary)]" : "text-gray-600"}`}>
+                    Wallet Balance
+                  </span>
+                  <span className="text-xs text-gray-500">
+                    {isWalletLoading ? 'Loading...' : `₦${walletBalance.toLocaleString()} available`}
+                  </span>
+                </div>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setPaymentMethod("card")}
+                className={`p-3 rounded-lg border-2 transition-all ${
+                  paymentMethod === "card"
+                    ? "border-[var(--color-brand-primary)] bg-[var(--color-brand-primary)]/5"
+                    : "border-gray-200 hover:border-gray-300"
+                }`}
+              >
+                <div className="flex flex-col items-center gap-1">
+                  <CreditCard size={20} className={paymentMethod === "card" ? "text-[var(--color-brand-primary)]" : "text-gray-400"} />
+                  <span className={`text-sm font-medium ${paymentMethod === "card" ? "text-[var(--color-brand-primary)]" : "text-gray-600"}`}>
+                    Card Payment
+                  </span>
+                  <span className="text-xs text-gray-500">
+                    Pay with Paystack
+                  </span>
+                </div>
+              </button>
             </div>
-            <span className="font-semibold">₦{(0 || 0).toLocaleString()}</span>
           </div>
 
+          {/* Wallet Balance Display */}
+          {paymentMethod === "wallet" && (
+            <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+              <div className="flex items-center gap-2">
+                <Wallet size={16} className="text-gray-500" />
+                <span className="text-sm text-gray-600">Wallet Balance</span>
+              </div>
+              <span className="font-semibold">
+                {isWalletLoading ? <Spinner size="sm" /> : `₦${walletBalance.toLocaleString()}`}
+              </span>
+            </div>
+          )}
+
+          {/* Card Payment Info */}
+          {paymentMethod === "card" && (
+            <div className="p-3 bg-blue-50 rounded-lg flex items-start gap-2">
+              <CreditCard size={16} className="text-blue-500 mt-0.5" />
+              <div>
+                <p className="text-xs text-blue-600 font-medium">Card Payment</p>
+                <p className="text-xs text-blue-600 mt-1">
+                  You'll be redirected to Paystack to complete your payment securely.
+                  After successful payment, the funds will be added to your wallet and automatically contributed to this goal.
+                </p>
+              </div>
+            </div>
+          )}
+
           {/* Warning for insufficient balance */}
-          {amount && parseFloat(amount) > (0 || 0) && (
+          {paymentMethod === "wallet" && amount && parseFloat(amount) > walletBalance && (
             <div className="p-3 bg-red-50 rounded-lg flex items-start gap-2">
               <AlertCircle size={16} className="text-red-500 mt-0.5" />
               <p className="text-xs text-red-600">
-                Insufficient wallet balance. Please fund your wallet to continue.
+                Insufficient wallet balance. Please fund your wallet or choose card payment.
               </p>
             </div>
           )}
@@ -238,21 +392,31 @@ export function GoalContributionModal({
               type="submit" 
               disabled={
                 contributeMutation.isPending || 
+                cardPaymentMutation.isPending ||
+                isRedirecting ||
+                isWalletLoading ||
                 !amount || 
                 parseFloat(amount) <= 0 ||
                 parseFloat(amount) > remaining ||
-                parseFloat(amount) > (0 || 0)
+                (paymentMethod === "wallet" && parseFloat(amount) > walletBalance)
               }
               className="flex-1"
             >
-              {contributeMutation.isPending ? <Spinner size="sm" /> : (
+              {contributeMutation.isPending || cardPaymentMutation.isPending || isRedirecting ? (
+                <Spinner size="sm" />
+              ) : (
                 <>
-                  Contribute
-                  <ArrowRight size={16} className="ml-2" />
+                  {paymentMethod === "wallet" ? "Contribute" : "Pay with Card"}
                 </>
               )}
             </Button>
           </div>
+
+          {paymentMethod === "card" && (
+            <p className="text-xs text-gray-400 text-center">
+              You will be redirected to Paystack to complete your payment securely
+            </p>
+          )}
         </form>
       )}
 
@@ -268,6 +432,11 @@ export function GoalContributionModal({
             <p className="text-gray-500 mt-1">
               You've contributed ₦{parseFloat(amount).toLocaleString()} to your savings goal.
             </p>
+            {paymentMethod === "card" && (
+              <p className="text-xs text-gray-400 mt-1">
+                Payment was processed via Paystack
+              </p>
+            )}
           </div>
           <div className="bg-gray-50 rounded-lg p-4">
             <div className="flex justify-between mb-2">

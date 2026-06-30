@@ -41,7 +41,13 @@ export class WalletService {
     return response.data;
   }
 
-  static async getTransactions(page: number = 1, limit: number = 20) {
+  static async initializeFunding(amount: number) {
+    const response = await api.post('/wallet/fund', { amount });
+    return response.data;
+  }
+
+  static async getTransactions(params: { limit: number, page?: number }) {
+    const { limit, page } = params; // Destructure params
     const response = await api.get(`/wallet/transactions?page=${page}&limit=${limit}`);
     return response.data;
   }

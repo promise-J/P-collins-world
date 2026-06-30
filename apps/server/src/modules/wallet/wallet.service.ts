@@ -68,7 +68,6 @@ export class WalletService {
   // }
 
   async credit(userId: string, amount: number, reference: string, metadata?: any) {
-    console.log({userId, reference, metadata, amount})
     // ✅ Get the actual wallet document
     const wallet = await this.getOrCreateWallet(userId);
 
