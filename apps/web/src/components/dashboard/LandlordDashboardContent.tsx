@@ -26,7 +26,7 @@ export function LandlordDashboardContent({ properties, loading }: LandlordDashbo
   // Fetch rent payments (you'll need to implement this endpoint)
   const { data: rentData, isLoading: rentLoading } = useQuery({
     queryKey: ["landlord-rent"],
-    queryFn: () => WalletService.getTransactions(),
+    queryFn: () => WalletService.getTransactions({limit: 50}),
     enabled: !!user,
   });
 

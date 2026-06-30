@@ -1,15 +1,14 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { SavingsService, dummyPersonalPlans } from "@/services/savings.service";
+import { SavingsService } from "@/services/savings.service";
 import { Button, Card, Spinner } from "@/ui";
-import { Plus, Target, Calendar, TrendingUp, Wallet, ArrowRight } from "lucide-react";
+import { Plus, Target, Calendar, TrendingUp, Wallet } from "lucide-react";
 import { Link } from "react-router-dom";
 import Container from "@/ui/components/Container";
 import { CreateSavingsGoalModal } from "@/components/goals/CreateSavingsGoalModal";
 import { SavingsGoalCard } from "@/components/goals/SavingsGoalCard";
 
 // Set to true to use dummy data for testing
-const USE_DUMMY_DATA = false;
 
 export default function SavingsGoalPage() {
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -17,12 +16,9 @@ export default function SavingsGoalPage() {
   const { data, isLoading, refetch } = useQuery({
     queryKey: ["savings-plans"],
     queryFn: () =>
-      USE_DUMMY_DATA
-        ? SavingsService.getDummyPlans()
-        : SavingsService.getMyPlans(),
+        SavingsService.getMyPlans(),
   });
 
-  console.log({data})
 
   const plans = data?.data || [];
   const totalSaved = plans.reduce((sum: number, plan: any) => sum + plan.currentAmount, 0);
@@ -62,11 +58,6 @@ export default function SavingsGoalPage() {
             <p className="text-gray-500 mt-1">
               Track and manage your savings goals
             </p>
-            {USE_DUMMY_DATA && (
-              <div className="mt-2 inline-block px-3 py-1 bg-yellow-100 text-yellow-700 text-xs rounded-full">
-                ⚡ Demo Mode - Using Sample Data
-              </div>
-            )}
           </div>
           <Button onClick={() => setShowCreateModal(true)}>
             <Plus size={18} className="mr-2" />

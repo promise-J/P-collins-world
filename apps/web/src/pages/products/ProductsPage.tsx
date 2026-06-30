@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { ProductService, dummyProducts } from "@/services/product.service";
+import { ProductService } from "@/services/product.service";
 import { ProductGrid } from "@/components/catalog/ProductGrid";
 import { ProductFilters } from "@/components/catalog/ProductFilters";
 import { ProductSearch } from "@/components/catalog/ProductSearch";
@@ -32,9 +32,7 @@ export default function ProductsPage() {
   const { data, isLoading, error } = useQuery({
     queryKey: ["products", page, filters, searchQuery],
     queryFn: () =>
-      USE_DUMMY_DATA
-        ? ProductService.getDummyProducts()
-        : ProductService.list({
+        ProductService.list({
             page,
             limit: 12,
             category: filters.category || undefined,

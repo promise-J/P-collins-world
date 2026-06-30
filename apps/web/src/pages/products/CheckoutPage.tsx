@@ -182,18 +182,18 @@ export default function CheckoutPage() {
         const order = orderResponse.data;
   
         // ✅ Initialize Paystack payment with order metadata
-        const paystackResponse = await PaystackService.initializePayment(
-          formData.email,
-          total + deliveryFee,
-          { 
-            orderId: order._id,        // ✅ Order ID for webhook
-            userId: user?._id,         // ✅ User ID for reference
+        const paystackResponse = await PaystackService.initializePayment({
+          amount: total + deliveryFee,
+          purpose: 'order_payment',
+          metadata: {
+            orderId: order._id,
+            userId: user?._id,
             orderReference: `ORD-${order._id.slice(-8)}`,
             deliveryFee: deliveryFee,
             itemsCount: items.length,
             timestamp: new Date().toISOString(),
           }
-        );
+        });
   
         if (paystackResponse.success) {
           // Store order ID and reference for verification

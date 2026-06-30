@@ -11,7 +11,7 @@ interface WalletTransactionModalProps {
 export function WalletTransactionModal({ open, onClose }: WalletTransactionModalProps) {
   const { data: transactionsData, isLoading } = useQuery({
     queryKey: ['wallet-transactions'],
-    queryFn: () => WalletService.getTransactions({ limit: 50 }),
+    queryFn: () => WalletService.getTransactions({ limit: 50, page: 1 }),
     enabled: open,
   });
 

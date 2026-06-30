@@ -10,13 +10,8 @@ import {
 } from "../wallet/transaction.model";
 import { WalletModel } from "../wallet/wallet.model";
 import { Types } from "mongoose";
-
-const walletService = new WalletService();
-
-// Extend Express Request interface to recognize rawBody securely
-interface AuthenticatedWebhookRequest extends Request {
-  rawBody?: Buffer;
-}
+import { SavingsPlanModel } from "../savings/saving-plan.model";
+import { SavingsGroupModel } from "../savings/saving-group.model";
 
 export class PaymentWebhookController {
   handleWebhook = async (req: Request, res: Response) => {
@@ -81,38 +76,65 @@ export class PaymentWebhookController {
       metadata,
     });
 
+    // Handle Wallet Funding
     if (
       (metadata?.fundWallet === true || metadata?.fundWallet === "true") &&
       metadata?.userId
     ) {
       try {
         const userObjectId = new Types.ObjectId(metadata.userId);
+        const amountInNaira = amount / 100;
 
-        const wallet = await WalletModel.findOne({ userId: userObjectId });
+        // Find or create wallet
+        let wallet = await WalletModel.findOne({ userId: userObjectId });
         if (wallet) {
-          wallet.balance += amount / 100;
+          wallet.balance += amountInNaira;
           await wallet.save();
         } else {
-          const newWallet = await WalletModel.create({
+          wallet = await WalletModel.create({
             userId: metadata.userId,
-            balance: amount / 100,
+            balance: amountInNaira,
             pendingBalance: 0,
           });
         }
 
+        // Create transaction record
+        const transaction = await TransactionModel.create({
+          walletId: wallet._id,
+          userId: metadata.userId,
+          type: TransactionType.CREDIT,
+          amount: amountInNaira,
+          reference: `WALLET_FUND_${reference}`,
+          status: TransactionStatus.SUCCESS,
+          metadata: {
+            originalReference: reference,
+            paidAt: new Date().toISOString(),
+            source: "paystack",
+          },
+        });
 
-          const transaction = await TransactionModel.create({
-            walletId: wallet?._id,
-            userId: metadata.userId,
-            type: TransactionType.CREDIT,
-            amount: amount / 100,
-            reference: `WALLET_FUND_${reference}`,
-            status: TransactionStatus.SUCCESS,
-            metadata: {
-              originalReference: reference,
-              paidAt: new Date().toISOString(),
-            },
-          });
+        console.log(
+          `✅ Wallet funded: ${amountInNaira} for user ${metadata.userId}`
+        );
+
+        // Check if this funding was for a savings goal contribution
+        if (metadata?.savingsGoalContribution) {
+          try {
+            const contributionData = JSON.parse(
+              metadata.savingsGoalContribution
+            );
+            await this.processSavingsGoalContribution(
+              userObjectId,
+              amountInNaira,
+              contributionData
+            );
+          } catch (parseError) {
+            console.error(
+              "Failed to parse savings goal contribution metadata:",
+              parseError
+            );
+          }
+        }
       } catch (error) {
         console.error(
           `❌ Failed to process wallet funding for user ${metadata.userId}:`,
@@ -122,6 +144,7 @@ export class PaymentWebhookController {
       return;
     }
 
+    // Handle Order Payment
     if (metadata?.orderId) {
       const order = await OrderModel.findById(metadata.orderId);
       if (!order) {
@@ -147,7 +170,156 @@ export class PaymentWebhookController {
       }
 
       console.log(`✅ Order ${metadata.orderId} marked as paid`);
+      return;
     }
+
+    // Handle Direct Savings Goal Contribution (without wallet funding)
+    if (metadata?.savingsGoalContribution && metadata?.userId) {
+      try {
+        const userObjectId = new Types.ObjectId(metadata.userId);
+        const amountInNaira = amount / 100;
+        const contributionData = JSON.parse(metadata.savingsGoalContribution);
+
+        await this.processSavingsGoalContribution(
+          userObjectId,
+          amountInNaira,
+          contributionData
+        );
+      } catch (error) {
+        console.error("Failed to process savings goal contribution:", error);
+      }
+      return;
+    }
+
+    console.log(`⚠️ Unhandled charge success for reference: ${reference}`);
+  }
+
+  private async processSavingsGoalContribution(
+    userId: Types.ObjectId,
+    amount: number,
+    contributionData: {
+      goalId?: string;
+      goalType: "individual" | "group";
+      goalName?: string;
+    }
+  ) {
+    const { goalId, goalType, goalName } = contributionData;
+
+    if (goalType === "individual") {
+      // Individual Savings Plan
+      const savingsPlan = await SavingsPlanModel.findOne({
+        _id: goalId,
+        userId: userId,
+        isCompleted: false,
+      });
+
+      if (!savingsPlan) {
+        console.log(
+          `❌ Savings plan not found or already completed: ${goalId}`
+        );
+        return;
+      }
+
+      const newAmount = savingsPlan.currentAmount + amount;
+      if (newAmount > (savingsPlan?.targetAmount ?? 0)) {
+        const target = savingsPlan?.targetAmount ?? 0;
+        const current = savingsPlan?.currentAmount ?? 0;
+
+        const adjustedAmount = target - current;
+
+        savingsPlan.currentAmount = target;
+        savingsPlan.isCompleted = true;
+
+        console.log(
+          `⚠️ Contribution adjusted from ${amount} to ${adjustedAmount} to match target`
+        );
+      } else {
+        savingsPlan.currentAmount = newAmount;
+        if (newAmount === savingsPlan.targetAmount) {
+          savingsPlan.isCompleted = true;
+        }
+      }
+
+      await savingsPlan.save();
+
+      // Create contribution record if you have a Contributions model
+      await this.createContributionRecord({
+        userId,
+        goalId: savingsPlan._id,
+        goalType: "individual",
+        amount: Math.min(
+          amount,
+          (savingsPlan?.targetAmount ?? 0) -
+            (savingsPlan.currentAmount - amount)
+        ),
+        reference: `SAVINGS_CONTRIB_${Date.now()}`,
+        paymentReference: (contributionData as any)?.paymentReference,
+      });
+
+      console.log(
+        `✅ Contribution added to savings plan ${savingsPlan._id}. ` +
+          `New balance: ${savingsPlan.currentAmount}/${savingsPlan.targetAmount}`
+      );
+    } else if (goalType === "group") {
+      // Group Savings
+      const group = await SavingsGroupModel.findOne({
+        _id: goalId,
+        "members.userId": userId,
+      });
+
+      if (!group) {
+        console.log(
+          `❌ Group savings not found or user not a member: ${goalId}`
+        );
+        return;
+      }
+
+      // Check if contribution would exceed target
+      const newAmount = group.currentAmount + amount;
+      if (newAmount > (group?.targetAmount ?? 0)) {
+        const targetAmount = group?.targetAmount ?? 0;
+        const currentAmount = group?.currentAmount ?? 0;
+        const adjustedAmount = targetAmount - currentAmount;
+        group.currentAmount = targetAmount;
+
+        console.log(
+          `⚠️ Group contribution adjusted from ${amount} to ${adjustedAmount} to match target`
+        );
+      } else {
+        group.currentAmount = newAmount;
+      }
+
+      await group.save();
+
+      // Create contribution record
+      await this.createContributionRecord({
+        userId,
+        goalId: group._id,
+        goalType: "group",
+        amount: Math.min(
+          amount,
+          (group?.targetAmount ?? 0) - (group.currentAmount - amount)
+        ),
+        reference: `GROUP_CONTRIB_${Date.now()}`,
+        paymentReference: (contributionData as any)?.paymentReference,
+      });
+
+      console.log(
+        `✅ Contribution added to group savings ${group._id}. ` +
+          `New balance: ${group.currentAmount}/${group.targetAmount}`
+      );
+    }
+  }
+
+  private async createContributionRecord(data: {
+    userId: Types.ObjectId;
+    goalId: Types.ObjectId;
+    goalType: "individual" | "group";
+    amount: number;
+    reference: string;
+    paymentReference?: string;
+  }) {
+    console.log("Contribution record:", data);
   }
 
   private async handleChargeFailed(data: any) {

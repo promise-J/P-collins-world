@@ -46,7 +46,7 @@ export function AgentDashboardContent({ properties, loading }: AgentDashboardCon
   // Fetch commission from wallet transactions
   const { data: commissionData, isLoading: commissionLoading } = useQuery({
     queryKey: ["agent-commission"],
-    queryFn: () => WalletService.getTransactions(),
+    queryFn: () => WalletService.getTransactions({limit: 50}),
     enabled: !!user,
   });
 
